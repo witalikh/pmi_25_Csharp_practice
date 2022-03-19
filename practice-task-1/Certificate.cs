@@ -1,6 +1,10 @@
 ﻿namespace practice_task_1;
 
-public class Certificate
+public class Certificate:
+    IRecognizable<string>, 
+    IValidatable, 
+    IFullyModifiable<IReadOnlyDictionary<string, string>>, 
+    ILookupAble<string>
 {
     // internal field declarations
     private readonly Dictionary<string, object?> _itemsDict = new();
@@ -9,42 +13,42 @@ public class Certificate
     public string? Id
     {
         get => _itemsDict["Id"] as string;
-        init => _itemsDict["Id"] = value;
+        private set => _itemsDict["Id"] = value;
     }
 
     public string? Username
     {
         get => _itemsDict["Username"] as string;
-        init => _itemsDict["Username"] = ValidationUtils.validate_regex(value, Settings.NamePattern);
+        private set => _itemsDict["Username"] = value;
     }
 
     public string? Passport
     {
         get => _itemsDict["Passport"] as string;
-        init => _itemsDict["Passport"] = ValidationUtils.validate_regex(value, Settings.PassportPattern);
+        private set => _itemsDict["Passport"] = value;
     }
 
     public DateTime? StartDate
     {
         get => _itemsDict["StartDate"] as DateTime?;
-        init => _itemsDict["StartDate"] = value;
+        private set => _itemsDict["StartDate"] = value;
     }
 
     public DateTime? EndDate
     {
         get => _itemsDict["EndDate"] as DateTime?;
-        init => _itemsDict["EndDate"] = value;
+        private set => _itemsDict["EndDate"] = value;
     }
 
     public DateTime? BirthDate
     {
         get => _itemsDict["BirthDate"] as DateTime?;
-        init => _itemsDict["BirthDate"] = value;
+        private set => _itemsDict["BirthDate"] = value;
     }
     public string? Vaccine
     {
         get => _itemsDict["Vaccine"] as string;
-        init => _itemsDict["Vaccine"] = ValidationUtils.validate_choice(value, Settings.Vaccines);
+        private set => _itemsDict["Vaccine"] = value;
     }
 
     public static string[] Keys()
@@ -67,18 +71,24 @@ public class Certificate
 
         return itemsDict;
     }
-    public Certificate(Dictionary<string, string> valuesDict)
+
+    public Certificate(){}
+    public Certificate(IReadOnlyDictionary<string, string> valuesDict)
+    {
+        this.Modify(valuesDict);
+    }
+    public void Modify(IReadOnlyDictionary<string, string> valuesDict)
     {
         Id = valuesDict["Id"];
         
-        Username = valuesDict["Username"];
-        Passport = valuesDict["Passport"];
+        Username = ValidationUtils.validate_regex(valuesDict["Username"], Settings.NamePattern);
+        Passport = ValidationUtils.validate_regex(valuesDict["Passport"], Settings.PassportPattern);
         
         StartDate = ValidationUtils.try_to_datetime(valuesDict["StartDate"]);
         EndDate = ValidationUtils.try_to_datetime(valuesDict["EndDate"]);
         BirthDate = ValidationUtils.try_to_datetime(valuesDict["BirthDate"]);
         
-        Vaccine = valuesDict["Vaccine"];
+        Vaccine = ValidationUtils.validate_choice(valuesDict["Vaccine"], Settings.Vaccines);
     }
 
     private void _GetSequenceErrors(ref ErrorsDict errorsDict)

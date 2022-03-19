@@ -4,13 +4,13 @@ namespace practice_task_1;
 
 public class Menu
 {
-    private readonly Collection _innerCollection;
+    private readonly Collection<string, Certificate> _innerCollection;
     private readonly Dictionary<string, string> _messages;
     private string? _fileName;
 
     public Menu(string msgFileName)
     {
-        this._innerCollection = new Collection();
+        this._innerCollection = new Collection<string, Certificate>();
         this._fileName = null;
 
         using StreamReader r = new StreamReader(msgFileName);
@@ -95,7 +95,7 @@ public class Menu
         {
             try
             {
-                Collection errors = _innerCollection.LoadFromJson(_fileName);
+                Collection<string, Certificate> errors = _innerCollection.LoadFromJson(_fileName);
                 Console.WriteLine(_messages["SuccessLoad"]);
 
                 if (errors.Size != 0)
@@ -143,7 +143,7 @@ public class Menu
         Console.WriteLine(_messages["EnterFilterValue"]);
         string value = Console.ReadLine() ?? string.Empty;
 
-        Collection filterResult = _innerCollection.Filter(value);
+        Collection<string, Certificate> filterResult = _innerCollection.Filter(value);
         
         Console.WriteLine(_messages["PrintFilteredPrefix"], value);
         for (int i = 0; i < filterResult.Size; ++i)

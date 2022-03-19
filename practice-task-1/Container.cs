@@ -2,32 +2,59 @@
 
 namespace practice_task_1;
 
-public class Collection
+public interface IRecognizable<out T>
+{
+    public T? Id { get; }
+}
+
+public interface IValidatable
+{
+    public ErrorsDict GetValidationErrors();
+}
+
+public interface IFullyModifiable<in T>
+{
+    public void Modify(T varName);
+}
+
+public interface ILookupAble<in T>
+{
+    public bool Contains(T lookupExpr);
+}
+
+public class Collection<TKeyType, TValueType>
+    where TKeyType: IComparable<TKeyType>
+    where TValueType : 
+    IRecognizable<TKeyType>, 
+    IValidatable, 
+    IFullyModifiable<Dictionary<string, string>>, 
+    ILookupAble<string>,
+    new()
 {
     // step off the original sequential data structure for sake of speed
-    private readonly SortedSet<string> _keys;
-    private List<Certificate> _container;
+    private readonly SortedSet<TKeyType> _keys;
+    private List<TValueType> _container;
 
     public int Size => _container.Count;
-
+    
     public Collection()
     {
-        _keys = new SortedSet<string>();
-        _container = new List<Certificate>();
+        _keys = new SortedSet<TKeyType>();
+        _container = new List<TValueType>();
     }
     
-    public Certificate this[int i] => _container[i];
-
-    public void Add(Certificate cert)
+    public TValueType this[int i] => _container[i];
+    
+    public void Add(TValueType value)
     {
-        if ((cert.Id == null) || (_keys.Contains(cert.Id)))
+        if (value.Id == null || _keys.Contains(value.Id))
             return;
 
-        _keys.Add(cert.Id);
-        _container.Add(cert);
+        _keys.Add(value.Id);
+        _container.Add(value);
     }
 
-    public bool Remove(string id)
+    public bool Remove(TKeyType id)
     {
         if (!_keys.Contains(id)) 
             return false;
@@ -43,16 +70,16 @@ public class Collection
         _container.Clear();
     }
 
-    public bool Contains(string id) => _keys.Contains(id);
+    public bool Contains(TKeyType id) => _keys.Contains(id);
 
-    public int? GetIndex(string id)
+    public int? GetIndex(TKeyType id)
     {
-        if (!Contains(id))
+        if (!this.Contains(id))
             return null;
         
         for (int i = 0; i < Size; ++i)
         {
-            if (_container[i].Id == id)
+            if (Equals(_container[i].Id, id))
             {
                 return i;
             }
@@ -61,37 +88,35 @@ public class Collection
         return null;
     }
 
-    public bool Edit(string id, Certificate newCert)
+    public bool Edit(TKeyType id, TValueType value)
     {
-        if (newCert.Id != id) 
+        if (Equals(value.Id, id)) 
             return false;
         
         int? index = GetIndex(id);
 
-        if (index != null)
-        {
-            _container[index.Value] = newCert;
-            return true;
-        }
+        if (index is null) 
+            return false;
+        _container[index.Value] = value;
+        return true;
 
-        return false;
     }
 
-    public Collection Filter(string? expr = null)
+    public Collection<TKeyType, TValueType> Filter(string? expr = null)
     {
         if (string.IsNullOrEmpty(expr))
         {
             return this;
         }
         
-        Collection filtered = new Collection();
-        foreach (Certificate certificate in _container)
+        Collection<TKeyType, TValueType> filtered = new();
+        foreach (TValueType value in _container)
         {
-            if (!certificate.Contains(expr) || certificate.Id == null)
+            if (!value.Contains(expr) || value.Id is null)
                 continue;
             
-            filtered._keys.Add(certificate.Id);
-            filtered._container.Add(certificate);
+            filtered._keys.Add(value.Id);
+            filtered._container.Add(value);
         }
 
         return filtered;
@@ -100,23 +125,22 @@ public class Collection
     public void Sort(string field)
     {
         _container = _container.OrderBy(
-            certificate => certificate.GetType().GetProperty(field)?.GetValue(certificate)
+            value => value.GetType().GetProperty(field)?.GetValue(value)
             ).ToList();
     }
 
     public void DumpIntoJson(string filename)
     {
-        using var fileStream = new StreamWriter(filename);
+        using StreamWriter fileStream = new(filename);
         string json = JsonSerializer.Serialize(_container);
         fileStream.Write(json);
     }
     
-
-    public Collection LoadFromJson(string filename)
+    public Collection<TKeyType, TValueType> LoadFromJson(string filename)
     {
-        Collection errorCollection = new Collection();
+        var errorCollection = new Collection<TKeyType, TValueType>();
         
-        using StreamReader fileStream = new StreamReader(filename);
+        using StreamReader fileStream = new(filename);
         string json = fileStream.ReadToEnd();
         
         var arr = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(json);
@@ -124,17 +148,19 @@ public class Collection
         if (arr == null)
             return errorCollection;
         
-        foreach (Dictionary<string, string> dict in arr)
+        foreach (var dict in arr)
         {
-            Certificate certificate = new Certificate(dict); 
-            ErrorsDict errors = certificate.GetValidationErrors();
-            if (certificate.Id != null && errors.Count == 0 && !Contains(certificate.Id))
+            TValueType value = new(); 
+            value.Modify(dict);
+            ErrorsDict errors = value.GetValidationErrors();
+            
+            if (value.Id != null && errors.Count == 0 && !Contains(value.Id))
             {
-                Add(certificate);
+                Add(value);
             }
             else
             {
-                errorCollection.Add(certificate);
+                errorCollection.Add(value);
             }
         }
         
