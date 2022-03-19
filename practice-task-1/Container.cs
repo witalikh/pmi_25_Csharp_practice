@@ -18,21 +18,19 @@ public class Collection
     
     public Certificate this[int i] => _container[i];
 
-    public bool Add(Certificate cert)
+    public void Add(Certificate cert)
     {
         if ((cert.Id == null) || (_keys.Contains(cert.Id)))
-            return false;
+            return;
 
         _keys.Add(cert.Id);
         _container.Add(cert);
-        return true;
     }
 
     public bool Remove(string id)
     {
         if (!_keys.Contains(id)) 
             return false;
-        
         int index = GetIndex(id) ?? -1;
         _keys.Remove(id);
         _container.RemoveAt(index);
@@ -121,14 +119,15 @@ public class Collection
         using StreamReader fileStream = new StreamReader(filename);
         string json = fileStream.ReadToEnd();
         
-        var arr = JsonSerializer.Deserialize<List<Certificate>>(json);
+        var arr = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(json);
 
         if (arr == null)
             return errorCollection;
         
-        foreach (Certificate certificate in arr)
+        foreach (Dictionary<string, string> dict in arr)
         {
-            var errors = certificate.GetValidationErrors();
+            Certificate certificate = new Certificate(dict); 
+            ErrorsDict errors = certificate.GetValidationErrors();
             if (certificate.Id != null && errors.Count == 0 && !Contains(certificate.Id))
             {
                 Add(certificate);

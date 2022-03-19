@@ -1,33 +1,50 @@
 ﻿namespace practice_task_1;
-using StringListDict = Dictionary<string, LinkedList<string>>;
+
 public class Certificate
 {
     // internal field declarations
-    private readonly string? _username;
-    private readonly string? _passport;
-    private readonly string? _vaccine;
+    private readonly Dictionary<string, object?> _itemsDict = new();
 
-    // interface field declarations
-    public string? Id { get; init; }
+    // property declarations
+    public string? Id
+    {
+        get => _itemsDict["Id"] as string;
+        init => _itemsDict["Id"] = value;
+    }
 
     public string? Username
     {
-        get => _username;
-        init => _username = ValidationUtils.validate_regex(value, Settings.NamePattern);
+        get => _itemsDict["Username"] as string;
+        init => _itemsDict["Username"] = ValidationUtils.validate_regex(value, Settings.NamePattern);
     }
 
     public string? Passport
     {
-        get => _passport;
-        init => _passport = ValidationUtils.validate_regex(value, Settings.PassportPattern);
+        get => _itemsDict["Passport"] as string;
+        init => _itemsDict["Passport"] = ValidationUtils.validate_regex(value, Settings.PassportPattern);
     }
-    public DateTime? StartDate { get; init; } 
-    public DateTime? EndDate { get; init; }
-    public DateTime? BirthDate { get; init; }
+
+    public DateTime? StartDate
+    {
+        get => _itemsDict["StartDate"] as DateTime?;
+        init => _itemsDict["StartDate"] = value;
+    }
+
+    public DateTime? EndDate
+    {
+        get => _itemsDict["EndDate"] as DateTime?;
+        init => _itemsDict["EndDate"] = value;
+    }
+
+    public DateTime? BirthDate
+    {
+        get => _itemsDict["BirthDate"] as DateTime?;
+        init => _itemsDict["BirthDate"] = value;
+    }
     public string? Vaccine
     {
-        get => _vaccine;
-        init => _vaccine = ValidationUtils.validate_choice(value, Settings.Vaccines);
+        get => _itemsDict["Vaccine"] as string;
+        init => _itemsDict["Vaccine"] = ValidationUtils.validate_choice(value, Settings.Vaccines);
     }
 
     public static string[] Keys()
@@ -36,77 +53,47 @@ public class Certificate
         return keys;
     }
 
-    public string[] Values()
+    public Dictionary<string, string> Items()
     {
-        string[] keys = Keys();
-        string[] values = new string[keys.Length];
-
-        for (int i = 0; i < keys.Length; i++)
+        Dictionary<string, string> itemsDict = new();
+        foreach ((string key, object? value) in _itemsDict)
         {
-            object? obj = GetType().GetProperty(keys[i])?.GetValue(this);
-            values[i] = obj?.ToString() ?? string.Empty;
+            if (value is null)
+            {
+                itemsDict[key] = string.Empty;
+            }
+            itemsDict[key] = value?.ToString() ?? string.Empty ;
         }
 
-        return values;
+        return itemsDict;
     }
-    
-    public Certificate(){}
-    
-    // hardcoded for functionality
-    // field order is program convention
-    public Certificate(params string[] args): 
-        this(
-            id: args[0], 
-            username: args[1], 
-            passport: args[2], 
-            startDate: args[3], 
-            endDate: args[4], 
-            birthDate: args[5], 
-            vaccine: args[6])
-    {}
+    public Certificate(Dictionary<string, string> valuesDict)
+    {
+        Id = valuesDict["Id"];
+        
+        Username = valuesDict["Username"];
+        Passport = valuesDict["Passport"];
+        
+        StartDate = ValidationUtils.try_to_datetime(valuesDict["StartDate"]);
+        EndDate = ValidationUtils.try_to_datetime(valuesDict["EndDate"]);
+        BirthDate = ValidationUtils.try_to_datetime(valuesDict["BirthDate"]);
+        
+        Vaccine = valuesDict["Vaccine"];
+    }
 
-    private Certificate(
-        string id,
-        string username, 
-        string passport, 
-        string startDate, 
-        string endDate, 
-        string birthDate, 
-        string vaccine)
-    {
-        Id = id;
-        
-        Username = username;
-        Passport = passport;
-        
-        StartDate = ValidationUtils.try_to_datetime(startDate);
-        EndDate = ValidationUtils.try_to_datetime(endDate);
-        BirthDate = ValidationUtils.try_to_datetime(birthDate);
-        
-        Vaccine = vaccine;
-    }
-    
-    private void _AddError(ref StringListDict dict, string key, string value)
-    {
-        if (dict.ContainsKey(key) == false)
-            dict[key] = new LinkedList<string>();
-        
-        dict[key].AddLast(value);
-    }
-    
-    private void _GetSequenceErrors(ref StringListDict dict)
+    private void _GetSequenceErrors(ref ErrorsDict errorsDict)
     {
         if (StartDate != null && EndDate != null && StartDate >= EndDate)
-            _AddError(ref dict, "EndDate", "StartDateEndDateSequenceError");
+            errorsDict.Add("EndDate", "StartDateEndDateSequenceError");
 
         if (BirthDate != null && StartDate != null && BirthDate >= StartDate)
-            _AddError(ref dict, "BirthDate", "BirthDateStartDateSequenceError");
+            errorsDict.Add("BirthDate", "BirthDateStartDateSequenceError");
 
         if (BirthDate != null && EndDate != null && BirthDate >= EndDate)
-            _AddError(ref dict, "BirthDate", "BirthDateEndDateSequenceError");
+            errorsDict.Add("BirthDate", "BirthDateEndDateSequenceError");
     }
     
-    private void _GetLegislationErrors(ref StringListDict dict)
+    private void _GetLegislationErrors(ref ErrorsDict errorsDict)
     {
         DateTime todayMinusMinAge = DateTime.Today.AddYears(-Settings.MinAge);
         DateTime todayMinusMaxAge = DateTime.Today.AddYears(-Settings.MaxAge);
@@ -115,28 +102,26 @@ public class Certificate
         DateTime? birthdayPlusMinAge = BirthDate?.AddYears(Settings.MinAge);
         
         if (BirthDate != null && BirthDate > todayMinusMinAge )
-            _AddError(ref dict, "BirthDate", "BirthDateTooEarly");
+            errorsDict.Add("BirthDate", "BirthDateTooEarly");
 
         if (BirthDate != null && BirthDate <= todayMinusMaxAge)
-            _AddError(ref dict, "BirthDate", "BirthDateTooLate");
+            errorsDict.Add("BirthDate", "BirthDateTooLate");
 
         if (StartDate != null && StartDate >= todayPlusMaxCert)
-            _AddError(ref dict, "StartDate", "StartDateTooLate");
+            errorsDict.Add("StartDate", "StartDateTooLate");
         
         if (StartDate != null && birthdayPlusMinAge != null && StartDate <= birthdayPlusMinAge)
-            _AddError(ref dict, "StartDate", "StartDateTooEarly");
+            errorsDict.Add("StartDate", "StartDateTooEarly");
     }
     
-    public StringListDict GetValidationErrors()
+    public ErrorsDict GetValidationErrors()
     {
-        var errorsDict = new StringListDict();
-
-        var properties = GetType().GetProperties();
-        foreach (var property in properties)
+        var errorsDict = new ErrorsDict();
+        foreach ((string property, object? value) in _itemsDict)
         {
-            if (property.GetValue(this) == null)
+            if (value == null)
             {
-                _AddError(ref errorsDict, property.Name, $"{property.Name}FormatError");
+                errorsDict.Add(property, $"{property}FormatError");
             }
         }
 
@@ -148,11 +133,15 @@ public class Certificate
 
     public bool Contains(string expr)
     {
-        string[] values = Values();
-        foreach (string value in values)
+        var values = _itemsDict.Values;
+        foreach (object? value in values)
         {
-            if (value.ToLower().Contains(expr.ToLower()))
-                return true;
+            if (value != null)
+            {
+                string strValue = value.ToString() ?? string.Empty;
+                if (strValue.ToLower().Contains(expr.ToLower()))
+                    return true;
+            }
         }
         return false;
     }

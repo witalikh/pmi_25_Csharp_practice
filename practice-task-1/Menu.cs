@@ -10,15 +10,15 @@ public class Menu
 
     public Menu(string msgFileName)
     {
-        _innerCollection = new Collection();
-        _fileName = null;
+        this._innerCollection = new Collection();
+        this._fileName = null;
 
         using StreamReader r = new StreamReader(msgFileName);
         string json = r.ReadToEnd();
         _messages = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
     }
 
-    private void _PrintErrors(ref Dictionary<string, LinkedList<string>> errors)
+    private void _PrintErrors(ref ErrorsDict errors)
     {
         Console.WriteLine("!!!");
         foreach ((string field, var listOfErrors) in errors)
@@ -60,13 +60,12 @@ public class Menu
 
     private void PrintCertificate(Certificate cert)
     {
-        string[] keys = Certificate.Keys();
-        string[] values = cert.Values();
+        Dictionary<string, string> itemsDict = cert.Items();
         
         Console.WriteLine("---");
-        for (int i = 0; i < keys.Length; ++i)
+        foreach ((string key, string? value) in itemsDict)
         {
-            Console.WriteLine($"{_messages[keys[i]]}{values[i]}");
+            Console.WriteLine($"{_messages[key]}{value}");
         }
         Console.WriteLine("+++");
     }
@@ -114,7 +113,6 @@ public class Menu
         {
             Console.WriteLine(_messages["FileNotSpecified"]);
         }
-        
     }
 
     private void DumpData()
@@ -158,24 +156,29 @@ public class Menu
     private void Add()
     {
         string[] keys = Certificate.Keys();
-        string[] values = new string[keys.Length];
+        Dictionary<string, string> values = new Dictionary<string, string>();
+        // string[] values = new string[keys.Length];
         
         Console.WriteLine("+++");
-        for (int i = 0; i < keys.Length; ++i)
+        foreach (string property in keys)
         {
-            Console.Write(_messages[$"{keys[i]}"]);
-            values[i] = (Console.ReadLine() ?? string.Empty).Trim();
+            Console.Write(_messages[$"{property}"]);
+            values[property] = (Console.ReadLine() ?? string.Empty).Trim();
         }
         Console.WriteLine("---");
         
         Certificate cert = new Certificate(values);
-
-        var errors = cert.GetValidationErrors();
+        
+        ErrorsDict errors = cert.GetValidationErrors();
+        if (_innerCollection.Contains(cert.Id ?? string.Empty))
+        {
+            errors.Add("Id", "IdCollision");
+        }
+        
         if (errors.Count == 0)
         {
-            Console.WriteLine(_innerCollection.Add(cert) 
-                ? _messages["SuccessAdd"] 
-                : _messages["IdCollision"]);
+            _innerCollection.Add(cert);
+            Console.WriteLine(_messages["SuccessAdd"]);
         }
         else
         {
@@ -194,35 +197,41 @@ public class Menu
         }
         else
         {
+            // find certificate index by id
             int certIndex = _innerCollection.GetIndex(id) ?? -1;
-
-            string[] certData = _innerCollection[certIndex].Values();
             
+            // copy old data
+            Dictionary<string, string> certData = _innerCollection[certIndex].Items();
+            
+            // get field name to change
             Console.WriteLine(_messages["ChooseFieldMenu"]);
             Console.Write(_messages["ChooseFieldOption"]);
             string option = Console.ReadLine() ?? string.Empty;
             string? field = _ChooseField(option);
 
+            // invalid field
             if (field == null)
             {
                 Console.WriteLine(_messages["WrongField"]);
                 return;
             }
 
-            int optionInt = Convert.ToInt32(option);
-            
+            // valid field, ask value
             Console.Write(_messages[field]);
-            certData[optionInt] = Console.ReadLine() ?? string.Empty;
-
+            certData[field] = Console.ReadLine() ?? string.Empty;
+            
+            // form certificate with edited value
             Certificate newCert = new Certificate(certData);
-
             var errors = newCert.GetValidationErrors();
+            
+            // if errors, print & exit
             if (errors.Count != 0)
             {
                 _PrintErrors(ref errors);
                 return;
             }
-
+            
+            // no errors, try to edit. fail => id collision
             Console.WriteLine(!_innerCollection.Edit(id, newCert)
                 ? _messages["IdViolation"]
                 : _messages["SuccessEdit"]);
@@ -231,9 +240,11 @@ public class Menu
 
     private void Delete()
     {
+        // scan id
         Console.WriteLine(_messages["EnterId"]);
         string id = Console.ReadLine() ?? string.Empty;
 
+        // try to delete by id
         Console.WriteLine(!_innerCollection.Remove(id) 
             ? _messages["IdAbsent"] 
             : _messages["SuccessDelete"]);

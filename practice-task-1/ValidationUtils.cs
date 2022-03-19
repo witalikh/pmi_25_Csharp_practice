@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace practice_task_1;
 
@@ -21,7 +22,7 @@ public static class ValidationUtils
 
     public static DateTime? try_to_datetime(dynamic? input)
     {
-        if (input?.GetType().ToString() == "DateTime")
+        if (input is DateTime)
             return input;
         
         try
