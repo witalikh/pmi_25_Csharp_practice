@@ -1,21 +1,40 @@
 ﻿using System.Text.Json;
-
 namespace practice_task_1;
 
-public class Menu
+public class Menu<TObject>
+    where TObject : 
+    IRecognizable<string>, 
+    IValidatable, 
+    IFullyModifiable<Dictionary<string, string>>, 
+    ILookupAble<string>,
+new()
 {
-    private readonly Collection<string, Certificate> _innerCollection;
+    private readonly Collection<string, TObject> _innerCollection;
     private readonly Dictionary<string, string> _messages;
     private string? _fileName;
 
+    private readonly TObject _emptySample = new();
+
     public Menu(string msgFileName)
     {
-        this._innerCollection = new Collection<string, Certificate>();
-        this._fileName = null;
+        _innerCollection = new Collection<string, TObject>();
+        _fileName = null;
 
-        using StreamReader r = new StreamReader(msgFileName);
+        using StreamReader r = new(msgFileName);
         string json = r.ReadToEnd();
         _messages = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+    }
+
+    private void _PrintMessage(string key, params object?[]? s)
+    {
+        if (_messages.ContainsKey(key))
+        {
+            Console.WriteLine(_messages[key], s);
+        }
+        else
+        {
+            Console.WriteLine(key, ": ", s);
+        }
     }
 
     private void _PrintErrors(ref ErrorsDict errors)
@@ -23,10 +42,10 @@ public class Menu
         Console.WriteLine("!!!");
         foreach ((string field, var listOfErrors) in errors)
         {
-            Console.WriteLine(_messages[$"{field}"]);
+            _PrintMessage($"{field}");
             foreach (string error in listOfErrors)
             {
-                Console.WriteLine($" - {_messages[error]}");
+                Console.WriteLine(_messages.ContainsKey(error) ? $" - {_messages[error]}" : $" - {error}");
             }
         }
         Console.WriteLine("!!!");
@@ -34,7 +53,7 @@ public class Menu
 
     private string? _ChooseField(string option)
     {
-        string[] keys = Certificate.Keys();
+        string[] keys = _emptySample.Keys();
 
         try
         {
@@ -52,27 +71,32 @@ public class Menu
 
     private void PrintMenu()
     {
-        Console.WriteLine(_fileName == null ? 
-            _messages["NotOpenedFile"] : 
-            string.Format(_messages["OpenedFile"], _fileName));
-        Console.WriteLine(_messages["Menu"]);
+        if (_fileName is null)
+        {
+            _PrintMessage("NotOpenedFile");
+        }
+        else
+        {
+            _PrintMessage("OpenedFile", _fileName);
+        }
+        _PrintMessage("Menu");
     }
 
-    private void PrintCertificate(Certificate cert)
+    private void PrintObject(TObject cert)
     {
-        Dictionary<string, string> itemsDict = cert.Items();
+        var itemsDict = cert.Items();
         
         Console.WriteLine("---");
         foreach ((string key, string? value) in itemsDict)
         {
-            Console.WriteLine($"{_messages[key]}{value}");
+            Console.WriteLine(_messages.ContainsKey(key) ? $"{_messages[key]}{value}" : $"{key}: {value}");
         }
         Console.WriteLine("+++");
     }
     
     private void OpenFile()
     {
-        Console.WriteLine(_messages["FileOpenRequest"]);
+        _PrintMessage("FileOpenRequest");
         _fileName = Console.ReadLine();
     }
 
@@ -80,12 +104,12 @@ public class Menu
     {
         if (_fileName != null)
         {
-            Console.WriteLine(_messages["SuccessClose"], _fileName);
+            _PrintMessage("SuccessClose", _fileName);
             _fileName = null;
         }
         else
         {
-            Console.WriteLine(_messages["AlreadyClosed"]);
+            _PrintMessage("AlreadyClosed");
         }
     }
     
@@ -95,23 +119,25 @@ public class Menu
         {
             try
             {
-                Collection<string, Certificate> errors = _innerCollection.LoadFromJson(_fileName);
-                Console.WriteLine(_messages["SuccessLoad"]);
+                var errors = _innerCollection.LoadFromJson(_fileName);
+                _PrintMessage("SuccessLoad");
 
-                if (errors.Size != 0)
-                {
-                    errors.DumpIntoJson(_fileName.Replace(".", "_") + ".json");
-                    Console.WriteLine(_messages["LoadErrorsFound"]);
-                }
+                if (errors.Size == 0) return;
+                errors.DumpIntoJson(_fileName.Replace(".", "_") + ".json");
+                _PrintMessage("LoadErrorsFound");
             }
             catch (JsonException)
             {
-                Console.WriteLine(_messages["FileCorruptedError"]);
+                _PrintMessage("FileCorruptedError");
+            }
+            catch (FileNotFoundException)
+            {
+                _PrintMessage("FileCorruptedError");
             }
         }
         else
         {
-            Console.WriteLine(_messages["FileNotSpecified"]);
+            _PrintMessage("FileNotSpecified");
         }
     }
 
@@ -120,54 +146,54 @@ public class Menu
         if (_fileName != null)
         {
             _innerCollection.DumpIntoJson(_fileName);
-            Console.WriteLine(_messages["SuccessDump"]);
+            _PrintMessage("SuccessDump");
         }
         else
         {
-            Console.WriteLine(_messages["FileNotSpecified"]);
+            _PrintMessage("FileNotSpecified");
         }
     }
 
     private void PrintAll()
     {
-        Console.WriteLine(_messages["PrintAllPrefix"]);
+        _PrintMessage("PrintAllPrefix");
         for (int i = 0; i < _innerCollection.Size; ++i)
         {
-            PrintCertificate(_innerCollection[i]);
+            PrintObject(_innerCollection[i]);
         }
-        Console.WriteLine(_messages["Size"], _innerCollection.Size);
+        _PrintMessage("Size", _innerCollection.Size);
     }
 
     private void PrintFiltered()
     {
-        Console.WriteLine(_messages["EnterFilterValue"]);
+        _PrintMessage("EnterFilterValue");
         string value = Console.ReadLine() ?? string.Empty;
 
-        Collection<string, Certificate> filterResult = _innerCollection.Filter(value);
+        var filterResult = _innerCollection.Filter(value);
         
-        Console.WriteLine(_messages["PrintFilteredPrefix"], value);
+        _PrintMessage("PrintFilteredPrefix", value);
         for (int i = 0; i < filterResult.Size; ++i)
         {
-            PrintCertificate(filterResult[i]);
+            PrintObject(filterResult[i]);
         }
-        Console.WriteLine(_messages["Size"], filterResult.Size);
+        _PrintMessage("Size", filterResult.Size);
     }
 
     private void Add()
     {
-        string[] keys = Certificate.Keys();
-        Dictionary<string, string> values = new Dictionary<string, string>();
-        // string[] values = new string[keys.Length];
-        
+        string[] keys = _emptySample.Keys();
+        var values = new Dictionary<string, string>();
+
         Console.WriteLine("+++");
         foreach (string property in keys)
         {
-            Console.Write(_messages[$"{property}"]);
+            Console.Write(_messages.ContainsKey(property) ? _messages[property] : property + ": ");
             values[property] = (Console.ReadLine() ?? string.Empty).Trim();
         }
         Console.WriteLine("---");
-        
-        Certificate cert = new Certificate(values);
+
+        TObject cert = new();
+        cert.Modify(values);
         
         ErrorsDict errors = cert.GetValidationErrors();
         if (_innerCollection.Contains(cert.Id ?? string.Empty))
@@ -178,7 +204,7 @@ public class Menu
         if (errors.Count == 0)
         {
             _innerCollection.Add(cert);
-            Console.WriteLine(_messages["SuccessAdd"]);
+            _PrintMessage("SuccessAdd");
         }
         else
         {
@@ -188,12 +214,12 @@ public class Menu
 
     private void Edit()
     {
-        Console.WriteLine(_messages["EnterId"]);
+        _PrintMessage("EnterId");
         string id = Console.ReadLine() ?? string.Empty;
 
         if (!_innerCollection.Contains(id))
         {
-            Console.WriteLine(_messages["IdAbsent"]);
+            _PrintMessage("IdAbsent");
         }
         else
         {
@@ -201,28 +227,31 @@ public class Menu
             int certIndex = _innerCollection.GetIndex(id) ?? -1;
             
             // copy old data
-            Dictionary<string, string> certData = _innerCollection[certIndex].Items();
+            var certData = _innerCollection[certIndex].Items();
             
             // get field name to change
-            Console.WriteLine(_messages["ChooseFieldMenu"]);
-            Console.Write(_messages["ChooseFieldOption"]);
+            _PrintMessage("ChooseFieldMenu");
+            Console.Write(_messages.ContainsKey("ChooseFieldOption")
+                ? _messages["ChooseFieldOption"]
+                : "ChooseFieldOption");
             string option = Console.ReadLine() ?? string.Empty;
             string? field = _ChooseField(option);
 
             // invalid field
             if (field == null)
             {
-                Console.WriteLine(_messages["WrongField"]);
+                _PrintMessage("WrongField");
                 return;
             }
 
             // valid field, ask value
-            Console.Write(_messages[field]);
+            Console.Write(_messages.ContainsKey(field) ? _messages[field] : field + ": ");
             certData[field] = Console.ReadLine() ?? string.Empty;
             
             // form certificate with edited value
-            Certificate newCert = new Certificate(certData);
-            var errors = newCert.GetValidationErrors();
+            TObject newCert = new();
+            newCert.Modify(certData);
+            ErrorsDict errors = newCert.GetValidationErrors();
             
             // if errors, print & exit
             if (errors.Count != 0)
@@ -232,51 +261,50 @@ public class Menu
             }
             
             // no errors, try to edit. fail => id collision
-            Console.WriteLine(!_innerCollection.Edit(id, newCert)
-                ? _messages["IdViolation"]
-                : _messages["SuccessEdit"]);
+            _PrintMessage(!_innerCollection.Edit(id, newCert) ? "IdViolation" : "SuccessEdit");
         }
     }
 
     private void Delete()
     {
         // scan id
-        Console.WriteLine(_messages["EnterId"]);
+        _PrintMessage("EnterId");
         string id = Console.ReadLine() ?? string.Empty;
 
         // try to delete by id
-        Console.WriteLine(!_innerCollection.Remove(id) 
-            ? _messages["IdAbsent"] 
-            : _messages["SuccessDelete"]);
+        _PrintMessage(!_innerCollection.Remove(id) ? "IdAbsent" : "SuccessDelete");
     }
 
     private void Sort()
     {
-        Console.WriteLine(_messages["ChooseFieldMenu"]);
-        Console.Write(_messages["ChooseFieldOption"]);
+        _PrintMessage("ChooseFieldMenu");
+        Console.Write(_messages.ContainsKey("ChooseFieldOption")
+            ? _messages["ChooseFieldOption"]
+            : "ChooseFieldOption");
+
         string option = Console.ReadLine() ?? string.Empty;
         string? field = _ChooseField(option);
 
         if (field == null)
         {
-            Console.WriteLine(_messages["WrongField"]);
+            _PrintMessage("WrongField");
             return;
         }
         
         _innerCollection.Sort(field);
-        Console.WriteLine(_messages["SuccessSort"]);
+        _PrintMessage("SuccessSort");
     }
 
     private void Clear()
     {
-        if (this._innerCollection.Size == 0)
+        if (_innerCollection.Size == 0)
         {
-            Console.WriteLine(_messages["AlreadyClean"]);
+            _PrintMessage("AlreadyClean");
         }
         else
         {
-            this._innerCollection.Clear();
-            Console.WriteLine(_messages["SuccessClean"]);
+            _innerCollection.Clear();
+            _PrintMessage("SuccessClean");
         }
     }
 
@@ -325,7 +353,7 @@ public class Menu
                 Clear();
                 break;
             default:
-                Console.WriteLine(_messages["WrongQuery"]);
+                _PrintMessage("WrongQuery");
                 break;
         }
 
@@ -338,12 +366,13 @@ public class Menu
         bool running = true;
         while (running)
         {
-            Console.Write(_messages["ChooseOption"]);
+            Console.Write(_messages.ContainsKey("ChooseOption")
+                ? _messages["ChooseOption"]
+                : "ChooseOption");
             string? option = Console.ReadLine();
 
             if (option != null)
                 running = RunOption(option.Trim().ToLowerInvariant());
-
         }
     }
 }

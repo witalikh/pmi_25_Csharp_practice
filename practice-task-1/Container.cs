@@ -17,9 +17,11 @@ public interface IFullyModifiable<in T>
     public void Modify(T varName);
 }
 
-public interface ILookupAble<in T>
+public interface ILookupAble<T>
 {
     public bool Contains(T lookupExpr);
+    public string[] Keys();
+    public Dictionary<string, T> Items();
 }
 
 public class Collection<TKeyType, TValueType>
@@ -74,7 +76,7 @@ public class Collection<TKeyType, TValueType>
 
     public int? GetIndex(TKeyType id)
     {
-        if (!this.Contains(id))
+        if (!Contains(id))
             return null;
         
         for (int i = 0; i < Size; ++i)

@@ -51,7 +51,7 @@ public class Certificate:
         private set => _itemsDict["Vaccine"] = value;
     }
 
-    public static string[] Keys()
+    public string[] Keys()
     {
         string[] keys = {"Id", "Username", "Passport", "StartDate", "EndDate", "BirthDate", "Vaccine"};
         return keys;
@@ -75,7 +75,7 @@ public class Certificate:
     public Certificate(){}
     public Certificate(IReadOnlyDictionary<string, string> valuesDict)
     {
-        this.Modify(valuesDict);
+        Modify(valuesDict);
     }
     public void Modify(IReadOnlyDictionary<string, string> valuesDict)
     {
