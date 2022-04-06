@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace practice_task_1;
 
@@ -26,7 +27,7 @@ public interface ILookupAble<T>
 
 public class Collection<TKeyType, TValueType>
     where TKeyType: IComparable<TKeyType>
-    where TValueType : 
+    where TValueType : class,
     IRecognizable<TKeyType>, 
     IValidatable, 
     IFullyModifiable<Dictionary<string, string>>, 
@@ -134,7 +135,20 @@ public class Collection<TKeyType, TValueType>
     public void DumpIntoJson(string filename)
     {
         using StreamWriter fileStream = new(filename);
-        string json = JsonSerializer.Serialize(_container);
+        string json = string.Empty;
+        try
+        {
+            json = JsonSerializer.Serialize(_container);
+        }
+        catch (NotSupportedException)
+        {
+            List<Dictionary<string, string>> lst = new List<Dictionary<string, string>>();
+            foreach (TValueType obj in _container)
+            {
+                lst.Add(obj.Items());
+            }
+            json = JsonSerializer.Serialize(lst);
+        }
         fileStream.Write(json);
     }
     

@@ -2,12 +2,12 @@
 namespace practice_task_1;
 
 public class Menu<TObject>
-    where TObject : 
+    where TObject : class,
     IRecognizable<string>, 
     IValidatable, 
     IFullyModifiable<Dictionary<string, string>>, 
     ILookupAble<string>,
-new()
+    new()
 {
     private readonly Collection<string, TObject> _innerCollection;
     private readonly Dictionary<string, string> _messages;
@@ -22,7 +22,17 @@ new()
 
         using StreamReader r = new(msgFileName);
         string json = r.ReadToEnd();
-        _messages = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
+        try
+        {
+            _messages = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ??
+                        new Dictionary<string, string>();
+        }
+        catch (JsonException)
+        {
+            _messages = new Dictionary<string, string>();
+            Console.WriteLine("DebugInfo: There is some issue with file for messages. \n" +
+                              "Menu might look corrupted");
+        }
     }
 
     private void _PrintMessage(string key, params object?[]? s)
@@ -51,9 +61,19 @@ new()
         Console.WriteLine("!!!");
     }
 
-    private string? _ChooseField(string option)
+    private string? _ChooseField()
     {
         string[] keys = _emptySample.Keys();
+        
+        _PrintMessage("ChooseFieldMenu");
+        for (uint i = 0; i < keys.Length; ++i)
+        {
+            Console.Write(_messages.ContainsKey(keys[i])
+                        ? _messages[keys[i]]
+                        : keys[i]);
+            Console.WriteLine($"-> {i}");
+        }
+        string option = Console.ReadLine() ?? string.Empty;
 
         try
         {
@@ -230,12 +250,7 @@ new()
             var certData = _innerCollection[certIndex].Items();
             
             // get field name to change
-            _PrintMessage("ChooseFieldMenu");
-            Console.Write(_messages.ContainsKey("ChooseFieldOption")
-                ? _messages["ChooseFieldOption"]
-                : "ChooseFieldOption");
-            string option = Console.ReadLine() ?? string.Empty;
-            string? field = _ChooseField(option);
+            string? field = _ChooseField();
 
             // invalid field
             if (field == null)
@@ -277,13 +292,7 @@ new()
 
     private void Sort()
     {
-        _PrintMessage("ChooseFieldMenu");
-        Console.Write(_messages.ContainsKey("ChooseFieldOption")
-            ? _messages["ChooseFieldOption"]
-            : "ChooseFieldOption");
-
-        string option = Console.ReadLine() ?? string.Empty;
-        string? field = _ChooseField(option);
+        string? field = _ChooseField();
 
         if (field == null)
         {
