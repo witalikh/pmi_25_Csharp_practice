@@ -2,12 +2,7 @@
 namespace practice_task_1;
 
 public class Menu<TObject>
-    where TObject : class,
-    IRecognizable<string>, 
-    IValidatable, 
-    IFullyModifiable<Dictionary<string, string>>, 
-    ILookupAble<string>,
-    new()
+    where TObject : class, IGenericValueType<string>, new()
 {
     private readonly Collection<string, TObject> _innerCollection;
     private readonly Dictionary<string, string> _messages;

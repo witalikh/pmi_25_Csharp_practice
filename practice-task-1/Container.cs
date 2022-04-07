@@ -1,79 +1,77 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace practice_task_1;
 
-public interface IRecognizable<out T>
-{
-    public T? Id { get; }
-}
-
-public interface IValidatable
-{
-    public ErrorsDict GetValidationErrors();
-}
-
-public interface IFullyModifiable<in T>
-{
-    public void Modify(T varName);
-}
-
-public interface ILookupAble<T>
-{
-    public bool Contains(T lookupExpr);
-    public string[] Keys();
-    public Dictionary<string, T> Items();
-}
-
 public class Collection<TKeyType, TValueType>
-    where TKeyType: IComparable<TKeyType>
-    where TValueType : class,
-    IRecognizable<TKeyType>, 
-    IValidatable, 
-    IFullyModifiable<Dictionary<string, string>>, 
-    ILookupAble<string>,
-    new()
+where TValueType: class, IGenericValueType<TKeyType>, new()
 {
     // step off the original sequential data structure for sake of speed
-    private readonly SortedSet<TKeyType> _keys;
-    private List<TValueType> _container;
+    
+    private List<TKeyType> _keys;
 
-    public int Size => _container.Count;
+    private Dictionary<TKeyType, List<MetaDataWrapper<TKeyType, TValueType>>> _Container;
+    private int _commitsCount = 0;
+
+    public int Size => _keys.Count;
+    public int CommitsCount => CommitsCount;
+
+    public MetaDataWrapper<TKeyType, TValueType> this[int i] =>
+    {
+        if ( this._Container[this._keys[i]].Count)
+            return _Container[_keys[i]][0];
+    } 
     
     public Collection()
     {
-        _keys = new SortedSet<TKeyType>();
-        _container = new List<TValueType>();
-    }
-    
-    public TValueType this[int i] => _container[i];
-    
-    public void Add(TValueType value)
-    {
-        if (value.Id == null || _keys.Contains(value.Id))
-            return;
-
-        _keys.Add(value.Id);
-        _container.Add(value);
+        _keys = new List<TKeyType>();
+        _Container = new Dictionary<TKeyType, List<MetaDataWrapper<TKeyType, TValueType>>>();
     }
 
-    public bool Remove(TKeyType id)
+    public ErrorsDict Commit(IReadOnlyDictionary<string, string> dict, AbstractUser user)
+    { 
+        MetaDataWrapper<TKeyType, TValueType> obj = new(dict, user);
+        
+        TKeyType? key = obj.Id;
+        ErrorsDict errors = obj.Errors;
+
+        if (key == null)
+        {
+            return errors;
+        }
+
+        if (_Container.ContainsKey(key))
+        {
+            errors.Add("Id", "IdCollision");
+        }
+
+        if (errors.Count == 0)
+        {
+            _Container[key].Add(obj);
+            _keys.Add(key);
+            _commitsCount += 1;
+        }
+
+        return errors;
+    }
+
+    public bool Revert(TKeyType id)
     {
         if (!_keys.Contains(id)) 
             return false;
         int index = GetIndex(id) ?? -1;
-        _keys.Remove(id);
-        _container.RemoveAt(index);
+        
+        _keys.RemoveAt(index);
+        _Container.Remove(id);
+        
         return true;
     }
 
     public void Clear()
     {
         _keys.Clear();
-        _container.Clear();
+        _Container.Clear();
     }
 
-    public bool Contains(TKeyType id) => _keys.Contains(id);
+    public bool Contains(TKeyType id) => _Container.ContainsKey(id);
 
     public int? GetIndex(TKeyType id)
     {
@@ -82,7 +80,7 @@ public class Collection<TKeyType, TValueType>
         
         for (int i = 0; i < Size; ++i)
         {
-            if (Equals(_container[i].Id, id))
+            if (Equals(_Container[_keys[i]].Id, id))
             {
                 return i;
             }
@@ -100,12 +98,12 @@ public class Collection<TKeyType, TValueType>
 
         if (index is null) 
             return false;
-        _container[index.Value] = value;
+        _Container[index.Value] = value;
         return true;
 
     }
 
-    public Collection<TKeyType, TValueType> Filter(string? expr = null)
+    /*public Collection<TKeyType, TValueType> Filter(string? expr = null)
     {
         if (string.IsNullOrEmpty(expr))
         {
@@ -123,7 +121,7 @@ public class Collection<TKeyType, TValueType>
         }
 
         return filtered;
-    }
+    }*/
 
     public void Sort(string field)
     {

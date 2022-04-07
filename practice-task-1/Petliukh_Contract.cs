@@ -59,10 +59,7 @@ namespace practice_task_1
         }
     }
 
-    class Contract : IRecognizable<string>,
-        IValidatable,
-        IFullyModifiable<IReadOnlyDictionary<string, string>>,
-        ILookupAble<string>
+    class Contract : IGenericValueType<string>
     {
         private int? _ID;
         private string? _contractorFirstName;

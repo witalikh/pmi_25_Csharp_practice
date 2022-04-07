@@ -1,10 +1,6 @@
 ﻿namespace practice_task_1;
 
-public class Certificate:
-    IRecognizable<string>, 
-    IValidatable, 
-    IFullyModifiable<IReadOnlyDictionary<string, string>>, 
-    ILookupAble<string>
+public class Certificate: IGenericValueType<string>
 {
     // internal field declarations
     private readonly Dictionary<string, object?> _itemsDict = new();
