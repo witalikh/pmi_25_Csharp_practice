@@ -93,7 +93,7 @@ public class Collection<TKeyType, TValueType>
 
     public bool Edit(TKeyType id, TValueType value)
     {
-        if (Equals(value.Id, id)) 
+        if (!Equals(value.Id, id)) 
             return false;
         
         int? index = GetIndex(id);
