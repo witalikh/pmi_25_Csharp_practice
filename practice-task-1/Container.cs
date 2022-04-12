@@ -1,68 +1,108 @@
 ﻿using System.Text.Json;
 namespace practice_task_1;
 
+
+public class VersionedObject<TKeyType, TObject> 
+    where TObject: class, IGenericValueType<TKeyType>, new()
+{
+    private TKeyType? _key;
+    private List<MetaDataWrapper<TKeyType, TObject>> _objVersions;
+
+    private int _latestStable = -1;
+
+    // properties
+    public MetaDataWrapper<TKeyType, TObject> this[int i] => _objVersions[i];
+    public TKeyType? Id => this._key;
+    public int size => _objVersions.Count;
+    
+    public TObject? Value => _latestStable != -1 ? this._objVersions[this._latestStable].Value : null;
+
+    public VersionedObject()
+    {
+        _key = default;
+        _objVersions = new List<MetaDataWrapper<TKeyType, TObject>>();
+    }
+
+    public (TKeyType, ErrorsDict) CommitNew(IReadOnlyDictionary<string, string> dict, AbstractUser user)
+    {
+        var obj = new MetaDataWrapper<TKeyType, TObject>(dict, user);
+
+        TKeyType id = obj.Id;
+        ErrorsDict errors = obj.Errors;
+
+        this._key ??= id;
+        
+        if (this._key != null && !Equals(id, this._key))
+            errors.Add("Id", "IdViolation");
+
+        if (errors.Count == 0)
+        {
+            _objVersions.Add(new MetaDataWrapper<TKeyType, TObject>(dict, user));
+            
+        }
+
+        return (id, errors);
+    }
+
+    public void Approve(int version)
+    {
+        if (_latestStable != -1)
+        {
+            _objVersions[_latestStable].Discard();
+        }
+        
+        _objVersions[version].Publish();
+        _latestStable = version;
+    }
+
+    public void Reject(int version)
+    {
+        _objVersions[version].Discard();   
+    }
+
+    
+
+
+}
+
+
 public class Collection<TKeyType, TValueType>
-where TValueType: class, IGenericValueType<TKeyType>, new()
+    where TValueType: class, IGenericValueType<TKeyType>, new()
 {
     // step off the original sequential data structure for sake of speed
     
     private List<TKeyType> _keys;
-
-    private Dictionary<TKeyType, List<MetaDataWrapper<TKeyType, TValueType>>> _Container;
-    private int _commitsCount = 0;
+    private Dictionary<TKeyType, VersionedObject<TKeyType, TValueType>> _Container;
 
     public int Size => _keys.Count;
-    public int CommitsCount => CommitsCount;
 
-    public MetaDataWrapper<TKeyType, TValueType> this[int i] =>
-    {
-        if ( this._Container[this._keys[i]].Count)
-            return _Container[_keys[i]][0];
-    } 
-    
     public Collection()
     {
         _keys = new List<TKeyType>();
-        _Container = new Dictionary<TKeyType, List<MetaDataWrapper<TKeyType, TValueType>>>();
+        _Container = new Dictionary<TKeyType, VersionedObject<TKeyType, TValueType>>();
     }
 
-    public ErrorsDict Commit(IReadOnlyDictionary<string, string> dict, AbstractUser user)
-    { 
-        MetaDataWrapper<TKeyType, TValueType> obj = new(dict, user);
-        
-        TKeyType? key = obj.Id;
-        ErrorsDict errors = obj.Errors;
-
-        if (key == null)
-        {
-            return errors;
-        }
-
-        if (_Container.ContainsKey(key))
-        {
-            errors.Add("Id", "IdCollision");
-        }
-
-        if (errors.Count == 0)
-        {
-            _Container[key].Add(obj);
-            _keys.Add(key);
-            _commitsCount += 1;
-        }
-
+    public ErrorsDict Commit(TKeyType id, IReadOnlyDictionary<string, string> dict, AbstractUser user)
+    {
+        (_, ErrorsDict errors) = this._Container[id].CommitNew(dict, user);
         return errors;
     }
 
-    public bool Revert(TKeyType id)
+    public ErrorsDict InitialCommit(IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {
-        if (!_keys.Contains(id)) 
-            return false;
-        int index = GetIndex(id) ?? -1;
+        var versionedObject = new VersionedObject<TKeyType, TValueType>();
+        (TKeyType id, ErrorsDict errors) = versionedObject.CommitNew(dict, user);
         
-        _keys.RemoveAt(index);
-        _Container.Remove(id);
+        if (_keys.Contains(id))
+            errors.Add("Id", "IdCollision");
         
-        return true;
+        if (errors.Count != 0) 
+            return errors;
+        
+        _Container[id] = versionedObject;
+        _keys.Add(id);
+
+        return errors;
     }
 
     public void Clear()
@@ -71,7 +111,7 @@ where TValueType: class, IGenericValueType<TKeyType>, new()
         _Container.Clear();
     }
 
-    public bool Contains(TKeyType id) => _Container.ContainsKey(id);
+    public bool Contains(TKeyType id) => _Container.ContainsKey(id) && _Container[id].Value != null;
 
     public int? GetIndex(TKeyType id)
     {
@@ -87,20 +127,6 @@ where TValueType: class, IGenericValueType<TKeyType>, new()
         }
 
         return null;
-    }
-
-    public bool Edit(TKeyType id, TValueType value)
-    {
-        if (Equals(value.Id, id)) 
-            return false;
-        
-        int? index = GetIndex(id);
-
-        if (index is null) 
-            return false;
-        _Container[index.Value] = value;
-        return true;
-
     }
 
     /*public Collection<TKeyType, TValueType> Filter(string? expr = null)
@@ -122,12 +148,12 @@ where TValueType: class, IGenericValueType<TKeyType>, new()
 
         return filtered;
     }*/
+    
+    
 
     public void Sort(string field)
     {
-        _container = _container.OrderBy(
-            value => value.GetType().GetProperty(field)?.GetValue(value)
-            ).ToList();
+        _keys.Sort(new VersionedObjectComparer<TKeyType, TValueType>(this._Container, field));
     }
 
     public void DumpIntoJson(string filename)
@@ -150,9 +176,9 @@ where TValueType: class, IGenericValueType<TKeyType>, new()
         fileStream.Write(json);
     }
     
-    public Collection<TKeyType, TValueType> LoadFromJson(string filename)
+    /*public Collection<TKeyType, TInnerObject, TValueType> LoadFromJson(string filename)
     {
-        var errorCollection = new Collection<TKeyType, TValueType>();
+        var errorCollection = new Collection<TKeyType, TInnerObject, TValueType>();
         
         using StreamReader fileStream = new(filename);
         string json = fileStream.ReadToEnd();
@@ -179,5 +205,5 @@ where TValueType: class, IGenericValueType<TKeyType>, new()
         }
         
         return errorCollection;
-    }
+    }*/
 }

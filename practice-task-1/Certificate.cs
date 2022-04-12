@@ -53,7 +53,13 @@ public class Certificate: IGenericValueType<string>
         return keys;
     }
 
-    public Dictionary<string, string> Items()
+    public IComparable? GetFieldValueByName(string field)
+    {
+        // TODO: potential encapsulation issues 
+        return (IComparable?) _itemsDict[field];
+    }
+
+    public Dictionary<string, string> FancyItems()
     {
         Dictionary<string, string> itemsDict = new();
         foreach ((string key, object? value) in _itemsDict)

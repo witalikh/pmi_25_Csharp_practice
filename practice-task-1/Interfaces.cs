@@ -15,17 +15,20 @@ public interface IFullyModifiable<in T>
     public void Modify(T varName);
 }
 
-public interface ILookupAble<T>
+public interface ILookupAble<TInnerObject>
 {
-    public bool Contains(T lookupExpr);
+    public bool Contains(string lookupExpr);
     public string[] Keys();
-    public Dictionary<string, T> Items();
+
+    public TInnerObject GetFieldValueByName(string field);
+    
+    public Dictionary<string, string> FancyItems();
 }
 
-public interface IGenericValueType<TKeyType>: 
+public interface IGenericValueType<out TKeyType>: 
     IRecognizable<TKeyType>, 
     IValidatable, 
     IFullyModifiable<IReadOnlyDictionary<string, string>>, 
-    ILookupAble<string>
+    ILookupAble<IComparable>
 {
 }

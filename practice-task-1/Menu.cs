@@ -2,9 +2,9 @@
 namespace practice_task_1;
 
 public class Menu<TObject>
-    where TObject : class, IGenericValueType<string>, new()
+    where TObject : class, IGenericValueType<string, IComparable>, new()
 {
-    private readonly Collection<string, TObject> _innerCollection;
+    private readonly Collection<string, IComparable, TObject> _innerCollection;
     private readonly Dictionary<string, string> _messages;
     private string? _fileName;
 
@@ -12,7 +12,7 @@ public class Menu<TObject>
 
     public Menu(string msgFileName)
     {
-        _innerCollection = new Collection<string, TObject>();
+        _innerCollection = new Collection<string, IComparable, TObject>();
         _fileName = null;
 
         using StreamReader r = new(msgFileName);
@@ -99,7 +99,7 @@ public class Menu<TObject>
 
     private void PrintObject(TObject cert)
     {
-        var itemsDict = cert.Items();
+        var itemsDict = cert.FancyItems();
         
         Console.WriteLine("---");
         foreach ((string key, string? value) in itemsDict)

@@ -4,31 +4,31 @@ public enum DraftStatus: uint
 {
     Approved = 0,
     Draft = 1,
-    Rejected = 2;
+    Rejected = 2
 }
 
-public class MetaDataWrapper<TKeyType, TValueType>
-where TValueType: class, IGenericValueType<TKeyType>, new()
+public class MetaDataWrapper<TKeyType, TObject>
+where TObject: class, IGenericValueType<TKeyType>, new()
 {
-    private TValueType _value;
-    private ErrorsDict _errors;
+    private TObject _value; // object
+    private ErrorsDict _errors; // hidden validation errors
     
     private DraftStatus _status = DraftStatus.Draft;
-
-    private AbstractUser _user;
+    private AbstractUser _author;
     
-    public TKeyType? Id => _status == DraftStatus.Rejected ? default : _value.Id;
     
+    public TKeyType Id => _value.Id;
+    public TObject Value => _value;
     public ErrorsDict Errors => _errors;
 
     
     public MetaDataWrapper(IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {
-        this._value = new TValueType();
+        this._value = new TObject();
         this._value.Modify(dict);
         
         this._errors = this._value.GetValidationErrors();
-        this._user = user;
+        this._author = user;
     }
 
     public void Publish()
@@ -40,6 +40,7 @@ where TValueType: class, IGenericValueType<TKeyType>, new()
     {
         this._status = DraftStatus.Rejected;
     }
+    
     
     
 }
