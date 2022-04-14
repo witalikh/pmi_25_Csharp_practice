@@ -1,117 +1,84 @@
 ﻿using System.Text.Json;
 namespace practice_task_1;
 
-
-public class VersionedObject<TKeyType, TObject> 
-    where TObject: class, IGenericValueType<TKeyType>, new()
-{
-    private TKeyType? _key;
-    private List<MetaDataWrapper<TKeyType, TObject>> _objVersions;
-
-    private int _latestStable = -1;
-
-    // properties
-    public MetaDataWrapper<TKeyType, TObject> this[int i] => _objVersions[i];
-    public TKeyType? Id => this._key;
-    public int size => _objVersions.Count;
-    
-    public TObject? Value => _latestStable != -1 ? this._objVersions[this._latestStable].Value : null;
-
-    public VersionedObject()
-    {
-        _key = default;
-        _objVersions = new List<MetaDataWrapper<TKeyType, TObject>>();
-    }
-
-    public (TKeyType, ErrorsDict) CommitNew(IReadOnlyDictionary<string, string> dict, AbstractUser user)
-    {
-        var obj = new MetaDataWrapper<TKeyType, TObject>(dict, user);
-
-        TKeyType id = obj.Id;
-        ErrorsDict errors = obj.Errors;
-
-        this._key ??= id;
-        
-        if (this._key != null && !Equals(id, this._key))
-            errors.Add("Id", "IdViolation");
-
-        if (errors.Count == 0)
-        {
-            _objVersions.Add(new MetaDataWrapper<TKeyType, TObject>(dict, user));
-            
-        }
-
-        return (id, errors);
-    }
-
-    public void Approve(int version)
-    {
-        if (_latestStable != -1)
-        {
-            _objVersions[_latestStable].Discard();
-        }
-        
-        _objVersions[version].Publish();
-        _latestStable = version;
-    }
-
-    public void Reject(int version)
-    {
-        _objVersions[version].Discard();   
-    }
-
-    
-
-
-}
-
-
 public class Collection<TKeyType, TValueType>
     where TValueType: class, IGenericValueType<TKeyType>, new()
 {
-    // step off the original sequential data structure for sake of speed
-    
-    private List<TKeyType> _keys;
-    private Dictionary<TKeyType, VersionedObject<TKeyType, TValueType>> _Container;
+    // dictionary
+    private Dictionary<TKeyType, MetaDataWrapper<TKeyType, TValueType>> _Container;
 
-    public int Size => _keys.Count;
+    public int Size => Keys.Count;
+    public MetaDataWrapper<TKeyType, TValueType> this[TKeyType key] => this._Container[key];
+
+    // auto-properties
+    public List<TKeyType> Keys { get; }
 
     public Collection()
     {
-        _keys = new List<TKeyType>();
-        _Container = new Dictionary<TKeyType, VersionedObject<TKeyType, TValueType>>();
+        Keys = new List<TKeyType>();
+        _Container = new Dictionary<TKeyType, MetaDataWrapper<TKeyType, TValueType>>();
     }
 
-    public ErrorsDict Commit(TKeyType id, IReadOnlyDictionary<string, string> dict, AbstractUser user)
+    public ErrorsDict Add(IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {
-        (_, ErrorsDict errors) = this._Container[id].CommitNew(dict, user);
-        return errors;
-    }
-
-    public ErrorsDict InitialCommit(IReadOnlyDictionary<string, string> dict, AbstractUser user)
-    {
-        var versionedObject = new VersionedObject<TKeyType, TValueType>();
-        (TKeyType id, ErrorsDict errors) = versionedObject.CommitNew(dict, user);
+        var obj = new MetaDataWrapper<TKeyType, TValueType>(dict, user);
+        ErrorsDict errors = obj.Errors;
         
-        if (_keys.Contains(id))
+        if (Keys.Contains(obj.Id))
             errors.Add("Id", "IdCollision");
         
         if (errors.Count != 0) 
             return errors;
         
-        _Container[id] = versionedObject;
-        _keys.Add(id);
+        _Container[obj.Id] = obj;
+        Keys.Add(obj.Id);
 
         return errors;
     }
+    
+    public ErrorsDict Edit(TKeyType id, IReadOnlyDictionary<string, string> dict, AbstractUser user)
+    {
+        var obj = new MetaDataWrapper<TKeyType, TValueType>(dict, user);
+        ErrorsDict errors = obj.Errors;
+        
+        if (obj.Id != null && !Equals(id, obj.Id))
+            errors.Add("Id", "IdViolation");
+
+        if (errors.Count == 0)
+        {
+            this._Container[obj.Id] = obj;
+        }
+        
+        return errors;
+    }
+    
+    public bool Delete(TKeyType id)
+    {
+        if (!this._Container.ContainsKey(id))
+            return false;
+        
+        this._Container.Remove(id);
+        this.Keys.Remove(id);
+        return true;
+    }
+
+    /*public bool Approve(TKeyType id, AbstractUser user)
+    {
+        return this.Contains(id) && this._Container[id].Publish();
+    }
+    
+    public bool Reject(TKeyType id, AbstractUser user)
+    {
+        return this.Contains(id) && this._Container[id].Discard();
+    }*/
 
     public void Clear()
     {
-        _keys.Clear();
+        Keys.Clear();
         _Container.Clear();
     }
 
-    public bool Contains(TKeyType id) => _Container.ContainsKey(id) && _Container[id].Value != null;
+    public bool Contains(TKeyType id) => _Container.ContainsKey(id);
 
     public int? GetIndex(TKeyType id)
     {
@@ -120,7 +87,7 @@ public class Collection<TKeyType, TValueType>
         
         for (int i = 0; i < Size; ++i)
         {
-            if (Equals(_Container[_keys[i]].Id, id))
+            if (Equals(_Container[Keys[i]].Id, id))
             {
                 return i;
             }
@@ -153,32 +120,29 @@ public class Collection<TKeyType, TValueType>
 
     public void Sort(string field)
     {
-        _keys.Sort(new VersionedObjectComparer<TKeyType, TValueType>(this._Container, field));
+        Keys.Sort(new VersionedObjectComparer<TKeyType, TValueType>(this._Container, field));
     }
 
     public void DumpIntoJson(string filename)
     {
         using StreamWriter fileStream = new(filename);
-        string json = string.Empty;
-        try
+        
+        var lst = new List<Dictionary<string, string>>();
+        foreach (TKeyType key in this._Container.Keys)
         {
-            json = JsonSerializer.Serialize(_container);
+            var fancyItems = this._Container[key].Value.FancyItems();
+            fancyItems["Author"] = this._Container[key].Author.ToString()!;
+            fancyItems["Status"] = this._Container[key].Status.ToString();
+            lst.Add(fancyItems);
         }
-        catch (NotSupportedException)
-        {
-            List<Dictionary<string, string>> lst = new List<Dictionary<string, string>>();
-            foreach (TValueType obj in _container)
-            {
-                lst.Add(obj.Items());
-            }
-            json = JsonSerializer.Serialize(lst);
-        }
+        string json = JsonSerializer.Serialize(lst);
+        
         fileStream.Write(json);
     }
     
-    /*public Collection<TKeyType, TInnerObject, TValueType> LoadFromJson(string filename)
+    public Dictionary<string, ErrorsDict> LoadFromJson(string filename)
     {
-        var errorCollection = new Collection<TKeyType, TInnerObject, TValueType>();
+        var errorCollection = new Dictionary<string, ErrorsDict>();
         
         using StreamReader fileStream = new(filename);
         string json = fileStream.ReadToEnd();
@@ -190,20 +154,27 @@ public class Collection<TKeyType, TValueType>
         
         foreach (var dict in arr)
         {
-            TValueType value = new(); 
-            value.Modify(dict);
-            ErrorsDict errors = value.GetValidationErrors();
+            string author = dict["Author"];
+            string status = dict["Status"];
+
+            dict.Remove("Author");
+            dict.Remove("Status");
             
-            if (value.Id != null && errors.Count == 0 && !Contains(value.Id))
+            AbstractUser user = new Admin();
+            ErrorsDict errors = this.Add(dict, user);
+            
+            if (errors.Count != 0)
             {
-                Add(value);
-            }
-            else
-            {
-                errorCollection.Add(value);
+                string id = dict.ContainsKey("Id") ? dict["Id"] : string.Empty;
+                if (!errorCollection.ContainsKey(id))
+                    errorCollection[id] = errors;
+                else
+                {
+                    // TODO: 
+                }
             }
         }
         
         return errorCollection;
-    }*/
+    }
 }
