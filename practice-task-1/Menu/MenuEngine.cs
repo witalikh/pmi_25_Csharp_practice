@@ -6,10 +6,14 @@ public partial class Menu<TObject>
 {
     private readonly Collection<string, TObject> _innerCollection;
     private readonly Dictionary<string, string> _messages;
+    private readonly Dictionary<string, AbstractUser> _users;
+
     private string? _fileName;
 
     private readonly TObject _emptySample = new();
-    private AbstractUser user;
+    private AbstractUser user = MainRoles.AnonymousUser;
+
+    private delegate void Option();
 
     public Menu(string msgFileName)
     {
@@ -84,20 +88,7 @@ public partial class Menu<TObject>
             return null;
         }
     }
-
-    private void PrintMenu()
-    {
-        if (_fileName is null)
-        {
-            _PrintMessage("NotOpenedFile");
-        }
-        else
-        {
-            _PrintMessage("OpenedFile", _fileName);
-        }
-        _PrintMessage("Menu");
-    }
-
+    
     private void _PrintObject(TObject cert)
     {
         var itemsDict = cert.FancyItems();
@@ -123,66 +114,72 @@ public partial class Menu<TObject>
         _innerCollection.Sort(field);
         _PrintMessage("SuccessSort");
     }
-
-    private void Clear()
+    
+    private bool RunOption(string option)
     {
-        if (_innerCollection.Size == 0)
+        Dictionary<string, Option> options;
+
+        if (this.user is Staff)
         {
-            _PrintMessage("AlreadyClean");
+            options = new()
+            {
+                {"0", PrintMenu},
+                {"1", PrintPublicAll},
+                {"2", PrintPublicFiltered},
+                {"3", PrintPrivateAll},
+                {"4", PrintPrivateFiltered},
+                {"5", Add},
+                {"6", Edit},
+                {"7", Delete},
+                {"8", Sort},
+                {"9", Logout}
+            };
+        } 
+        else if (this.user is Admin)
+        {
+            options = new()
+            {
+                {"0", PrintMenu},
+                // {"1", PrintAllUsers},
+                {"2", PrintPublicAll},
+                {"3", PrintDraftAll},
+                {"4", PrintPublicFiltered},
+                {"5", PrintDraftFiltered},
+                {"6", Approve},
+                {"7", Reject},
+                {"8", Add},
+                {"9", Edit},
+                {"10", Delete},
+                {"11", Sort},
+                {"12", Logout}
+                
+            };
         }
         else
         {
-            _innerCollection.Clear();
-            _PrintMessage("SuccessClean");
+            options = new()
+            {
+                {"0", PrintMenu},
+                {"1", SignUp},
+                {"2", SignIn}
+            };
         }
-    }
 
-    private bool RunOption(string option)
-    {
         switch (option)
         {
             case "-1":
             case "exit":
             case "quit":
                 return false;
-            case "0":
-                PrintMenu();
-                break;
-            case "1":
-                OpenFile();
-                break;
-            case "2":
-                CloseFile();
-                break;
-            case "3":
-                LoadData();
-                break;
-            case "4":
-                DumpData();
-                break;
-            case "5":
-                PrintAll();
-                break;
-            case "6":
-                PrintFiltered();
-                break;
-            case "7":
-                Add();
-                break;
-            case "8":
-                Edit();
-                break;
-            case "9":
-                Delete();
-                break;
-            case "10":
-                Sort();
-                break;
-            case "11":
-                Clear();
-                break;
             default:
-                _PrintMessage("WrongQuery");
+                if (options.ContainsKey(option))
+                {
+                    options[option]();
+                }
+                else
+                {
+                    _PrintMessage("WrongQuery");
+                }
                 break;
         }
 
@@ -192,6 +189,10 @@ public partial class Menu<TObject>
     public void Run()
     {
         PrintMenu();
+        
+        this.LoadUsers();
+        this.LoadData();
+        
         bool running = true;
         while (running)
         {
@@ -203,5 +204,7 @@ public partial class Menu<TObject>
             if (option != null)
                 running = RunOption(option.Trim().ToLowerInvariant());
         }
+        this.DumpData();
+        this.DumpUsers();
     }
 }

@@ -29,6 +29,7 @@ public partial class Menu<TObject>
             _PrintMessage("SuccessAdd");
     }
 
+    // edit 
     private void Edit()
     {
         if (!this.user.HasEditPerms)
@@ -44,9 +45,13 @@ public partial class Menu<TObject>
         {
             _PrintMessage("IdAbsent");
         }
+        else if (!this.user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this.user)
+        {
+            _PrintMessage("InstancePermissionDenied");
+        }
         else
         {
-            Dictionary<string, string> oldData = this._innerCollection[key].Value!.FancyItems();
+            var oldData = this._innerCollection[key].Value!.FancyItems();
             
             string? field = _ChooseField();
             if (field == null)
@@ -67,6 +72,7 @@ public partial class Menu<TObject>
         }
     }
 
+    // delete object
     private void Delete()
     {
         if (!this.user.HasEditPerms)
@@ -75,11 +81,21 @@ public partial class Menu<TObject>
             return;
         }
         
-        // scan id
         _PrintMessage("EnterId");
-        string id = Console.ReadLine() ?? string.Empty;
-
-        // try to delete by id
-        _PrintMessage(!_innerCollection.Delete(id) ?"IdAbsent" : "SuccessDelete");
+        string key = Console.ReadLine() ?? string.Empty;
+        
+        if (this._innerCollection.Contains(key))
+        {
+            _PrintMessage("IdAbsent");
+        }
+        else if (!this.user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this.user)
+        {
+            _PrintMessage("InstancePermissionDenied");
+        }
+        else
+        {
+            _innerCollection.Delete(key);
+            _PrintMessage("SuccessDelete");
+        }
     }
 }

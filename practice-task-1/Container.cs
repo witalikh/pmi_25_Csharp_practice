@@ -96,7 +96,7 @@ public class Collection<TKeyType, TValueType>
         return null;
     }
 
-    /*public Collection<TKeyType, TValueType> Filter(string? expr = null)
+    public Collection<TKeyType, TValueType> Filter(string? expr = null)
     {
         if (string.IsNullOrEmpty(expr))
         {
@@ -104,17 +104,15 @@ public class Collection<TKeyType, TValueType>
         }
         
         Collection<TKeyType, TValueType> filtered = new();
-        foreach (TValueType value in _container)
+        foreach ((TKeyType key, var value) in this._Container)
         {
-            if (!value.Contains(expr) || value.Id is null)
+            if (!value.Value.Contains(expr))
                 continue;
             
-            filtered._keys.Add(value.Id);
-            filtered._container.Add(value);
+            filtered._Container.Add(key, value);
         }
-
         return filtered;
-    }*/
+    }
     
     
 
@@ -125,23 +123,34 @@ public class Collection<TKeyType, TValueType>
 
     public void DumpIntoJson(string filename)
     {
-        using StreamWriter fileStream = new(filename);
-        
-        var lst = new List<Dictionary<string, string>>();
         foreach (TKeyType key in this._Container.Keys)
         {
+            using StreamWriter fileStream = new($"{filename}/{key?.ToString()}");
+            
             var fancyItems = this._Container[key].Value.FancyItems();
             fancyItems["Author"] = this._Container[key].Author.ToString()!;
             fancyItems["Status"] = this._Container[key].Status.ToString();
-            lst.Add(fancyItems);
+
+            string json = JsonSerializer.Serialize(fancyItems);
+            fileStream.Write(json);
         }
-        string json = JsonSerializer.Serialize(lst);
-        
-        fileStream.Write(json);
     }
     
     public Dictionary<string, ErrorsDict> LoadFromJson(string filename)
     {
+        
+        /*foreach (TKeyType key in this._Container.Keys)
+        {
+            using StreamWriter fileStream = new($"{filename}/{key?.ToString()}");
+            
+            var fancyItems = this._Container[key].Value.FancyItems();
+            fancyItems["Author"] = this._Container[key].Author.ToString()!;
+            fancyItems["Status"] = this._Container[key].Status.ToString();
+
+            string json = JsonSerializer.Serialize(fancyItems);
+            fileStream.Write(json);
+        }
+        
         var errorCollection = new Dictionary<string, ErrorsDict>();
         
         using StreamReader fileStream = new(filename);
@@ -175,6 +184,6 @@ public class Collection<TKeyType, TValueType>
             }
         }
         
-        return errorCollection;
+        return errorCollection;*/
     }
 }

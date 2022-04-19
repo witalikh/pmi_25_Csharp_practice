@@ -3,25 +3,6 @@ namespace practice_task_1;
 
 public partial class Menu<TObject>
 {
-    private void OpenFile()
-    {
-        _PrintMessage("FileOpenRequest");
-        _fileName = Console.ReadLine();
-    }
-
-    private void CloseFile()
-    {
-        if (_fileName != null)
-        {
-            _PrintMessage("SuccessClose", _fileName);
-            _fileName = null;
-        }
-        else
-        {
-            _PrintMessage("AlreadyClosed");
-        }
-    }
-    
     private void LoadData()
     {
         if (_fileName != null)
@@ -30,11 +11,6 @@ public partial class Menu<TObject>
             {
                 var errors = _innerCollection.LoadFromJson(_fileName);
                 _PrintMessage("SuccessLoad");
-
-                // TODO: validation
-                /*if (errors.Size == 0) return;
-                errors.DumpIntoJson(_fileName.Replace(".", "_") + ".json");
-                _PrintMessage("LoadErrorsFound");*/
             }
             catch (JsonException)
             {
@@ -53,14 +29,6 @@ public partial class Menu<TObject>
 
     private void DumpData()
     {
-        if (_fileName != null)
-        {
-            _innerCollection.DumpIntoJson(_fileName);
-            _PrintMessage("SuccessDump");
-        }
-        else
-        {
-            _PrintMessage("FileNotSpecified");
-        }
+        _innerCollection.DumpIntoJson("certificate");
     }
 }

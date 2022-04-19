@@ -17,6 +17,8 @@ where TObject: class, IGenericValueType<TKeyType>, new()
     public DraftStatus Status { get; private set; } = DraftStatus.Draft;
     public AbstractUser Author { get; }
 
+    public string Comment = string.Empty;
+
     public MetaDataWrapper(IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {
         this.Value = new TObject();
@@ -26,13 +28,14 @@ where TObject: class, IGenericValueType<TKeyType>, new()
         this.Author = user;
     }
 
-    public void Publish()
+    public void Approve()
     {
         this.Status = DraftStatus.Approved;
     }
 
-    public void Discard()
+    public void Reject(string comment="")
     {
         this.Status = DraftStatus.Rejected;
+        this.Comment = "";
     }
 }
