@@ -2,20 +2,69 @@
 
 public class Staff: AbstractUser
 {
-    private decimal _salary;
-    private DateTime _firstDayInCompany;
+    public decimal? Salary { get; private set; }
+    public DateTime FirstDayInCompany { get; private set; }
 
-    public Staff(string firstName, string lastName, string email, string password, decimal salary)
+    public Staff(
+        string firstName, 
+        string lastName, 
+        string email, 
+        string password, 
+        decimal salary,
+        DateTime? created = null,
+        bool secured = true)
     {
-        this._role = MainRoles.Staff;
+        this.Role = MainRoles.Staff;
+        this.FirstDayInCompany = created ?? DateTime.Now;
 
-        this._firstName = firstName;
-        this._lastName = lastName;
+        this.FirstName = firstName;
+        this.LastName = lastName;
 
-        this._email = email;
-        this.SetPassword(password);
+        this.Email = email;
+        if (secured)
+        {
+            this.Password = password;
+        }
+        else
+        {
+            this.SetUnsecuredPassword(password);
+        }
         
-        this._firstDayInCompany = DateTime.Now;
-        this._salary = salary;
+        this.FirstDayInCompany = DateTime.Now;
+        this.Salary = salary;
+    }
+
+    public override ErrorsDict GetValidationErrors()
+    {
+        ErrorsDict errors = base.GetValidationErrors();
+        
+        if (Salary == null)
+            errors.Add("Salary", "SalaryFormat");
+
+        return errors;
+    }
+
+    public static (Staff, ErrorsDict) Create(Dictionary<string, string> dict, bool secured)
+    {
+        string firstName = dict["FirstName"];
+        string lastName = dict["LastName"];
+        
+        string email = dict["Email"];
+        string password = dict["Password"];
+
+        string salary = dict["Salary"];
+        DateTime created = DateTime.Now;
+        if (dict.ContainsKey("FirstDayInCompany"))
+            DateTime.TryParse(dict["FirstDayInCompany"],out created);
+        
+        // string role = dict["role"];
+
+        Staff staff = new Staff(
+            firstName, lastName, 
+            email, password, 
+            decimal.Parse(salary), created, secured);
+
+        ErrorsDict errors = staff.GetValidationErrors();
+        return (staff, errors);
     }
 }

@@ -6,7 +6,7 @@ public partial class Menu<TObject>
 {
     private readonly Collection<string, TObject> _innerCollection;
     private readonly Dictionary<string, string> _messages;
-    private readonly Dictionary<string, AbstractUser> _users;
+    private readonly Dictionary<string, AbstractUser> _users = new();
 
     private string? _fileName;
 

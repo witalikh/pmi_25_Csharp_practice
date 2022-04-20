@@ -138,7 +138,7 @@ public class Collection<TKeyType, TValueType>
     
     public Dictionary<string, ErrorsDict> LoadFromJson(string filename)
     {
-        
+        return new();
         /*foreach (TKeyType key in this._Container.Keys)
         {
             using StreamWriter fileStream = new($"{filename}/{key?.ToString()}");

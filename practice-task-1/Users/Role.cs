@@ -36,5 +36,5 @@ public static class MainRoles
         has_edit_perms_for_other_instances: false
         );
 
-    public static AnonymousUser AnonymousUser = new();
+    public static readonly AnonymousUser AnonymousUser = new();
 }
