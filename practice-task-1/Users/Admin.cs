@@ -1,4 +1,6 @@
-﻿namespace practice_task_1;
+﻿using System.Text.Json.Nodes;
+
+namespace practice_task_1;
 
 public class Admin: AbstractUser
 {
@@ -26,15 +28,13 @@ public class Admin: AbstractUser
         }
     }
     
-    public static (Admin, ErrorsDict) Create(Dictionary<string, string> dict, bool secured)
+    public static (Admin, ErrorsDict) Create(JsonObject dict, bool secured)
     {
-        string firstName = dict["FirstName"];
-        string lastName = dict["LastName"];
+        string firstName = dict[nameof(FirstName)]?.GetValue<string>() ?? string.Empty;
+        string lastName = dict[nameof(LastName)]?.GetValue<string>() ?? string.Empty;
         
-        string email = dict["Email"];
-        string password = dict["Password"];
-        
-        // string role = dict["role"];
+        string email = dict[nameof(Email)]?.GetValue<string>() ?? string.Empty;
+        string password = dict[nameof(Password)]?.GetValue<string>() ?? string.Empty;
 
         Admin admin = new Admin(firstName, lastName, email, password, secured);
         ErrorsDict errors = admin.GetValidationErrors();

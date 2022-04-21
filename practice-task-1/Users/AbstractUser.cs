@@ -1,4 +1,5 @@
-﻿using static practice_task_1.ValidationUtils;
+﻿using System.Text.Json.Serialization;
+using static practice_task_1.ValidationUtils;
 using static practice_task_1.Hashers;
 namespace practice_task_1;
 
@@ -35,6 +36,7 @@ public abstract class AbstractUser
         protected set => _password = ComputeSha256Hash(value);
     }
 
+    [JsonIgnore]
     public Role Role
     {
         get;
@@ -73,11 +75,11 @@ public abstract class AbstractUser
     }
 
     // bool
-    public bool IsSuperAdmin => Role.IsSuperAdmin;
-    public bool HasApprovePerms => Role.IsSuperAdmin || Role.HasApprovalPerms;
-    public bool HasEditPermsForOtherInstances => 
+    [JsonIgnore] public bool IsSuperAdmin => Role.IsSuperAdmin;
+    [JsonIgnore] public bool HasApprovePerms => Role.IsSuperAdmin || Role.HasApprovalPerms;
+    [JsonIgnore] public bool HasEditPermsForOtherInstances => 
         Role.IsSuperAdmin || Role.HasEditPermissionsForOtherInstances;
-    public bool HasEditPerms => Role.IsSuperAdmin || Role.HasEditPermissions;
+    [JsonIgnore] public bool HasEditPerms => Role.IsSuperAdmin || Role.HasEditPermissions;
 
     public bool CheckPassword(string password)
     {

@@ -1,9 +1,11 @@
-﻿namespace practice_task_1;
+﻿using System.Text.Json.Nodes;
+
+namespace practice_task_1;
 
 public class Staff: AbstractUser
 {
-    public decimal? Salary { get; private set; }
-    public DateTime FirstDayInCompany { get; private set; }
+    public decimal? Salary { get; private init; }
+    public DateTime FirstDayInCompany { get; private init; }
 
     public Staff(
         string firstName, 
@@ -44,25 +46,21 @@ public class Staff: AbstractUser
         return errors;
     }
 
-    public static (Staff, ErrorsDict) Create(Dictionary<string, string> dict, bool secured)
+    public static (Staff, ErrorsDict) Create(JsonObject dict, bool secured)
     {
-        string firstName = dict["FirstName"];
-        string lastName = dict["LastName"];
+        string firstName = dict[nameof(FirstName)]?.GetValue<string>() ?? string.Empty;
+        string lastName = dict[nameof(LastName)]?.GetValue<string>() ?? string.Empty;
         
-        string email = dict["Email"];
-        string password = dict["Password"];
+        string email = dict[nameof(Email)]?.GetValue<string>() ?? string.Empty;
+        string password = dict[nameof(Password)]?.GetValue<string>() ?? string.Empty;
 
-        string salary = dict["Salary"];
-        DateTime created = DateTime.Now;
-        if (dict.ContainsKey("FirstDayInCompany"))
-            DateTime.TryParse(dict["FirstDayInCompany"],out created);
-        
-        // string role = dict["role"];
+        decimal salary = dict[nameof(Salary)]?.GetValue<decimal>() ?? decimal.Zero;
+        DateTime created = dict[nameof(FirstDayInCompany)]?.GetValue<DateTime>() ?? DateTime.Now;
 
         Staff staff = new Staff(
             firstName, lastName, 
             email, password, 
-            decimal.Parse(salary), created, secured);
+            salary, created, secured);
 
         ErrorsDict errors = staff.GetValidationErrors();
         return (staff, errors);
