@@ -5,30 +5,23 @@ public partial class Menu<TObject>
 {
     private void LoadData()
     {
-        if (_fileName != null)
+        try
         {
-            try
-            {
-                var errors = _innerCollection.LoadFromJson(_fileName);
-                _PrintMessage("SuccessLoad");
-            }
-            catch (JsonException)
-            {
-                _PrintMessage("FileCorruptedError");
-            }
-            catch (FileNotFoundException)
-            {
-                _PrintMessage("FileCorruptedError");
-            }
+            _innerCollection.LoadFromJson(FileName!, this._users);
+            _PrintMessage("SuccessLoad");
         }
-        else
+        catch (JsonException)
         {
-            _PrintMessage("FileNotSpecified");
+            _PrintMessage("FileCorruptedError");
+        }
+        catch (FileNotFoundException)
+        {
+            _PrintMessage("FileCorruptedError");
         }
     }
 
     private void DumpData()
     {
-        _innerCollection.DumpIntoJson("certificate");
+        _innerCollection.DumpIntoJson(FileName!);
     }
 }

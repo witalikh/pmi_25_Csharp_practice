@@ -1,38 +1,25 @@
 ﻿using System.Text.Json;
+using practice_task_1.static_files;
+
 namespace practice_task_1;
 
 public partial class Menu<TObject>
     where TObject : class, IGenericValueType<string>, new()
 {
     private readonly Collection<string, TObject> _innerCollection;
-    private readonly Dictionary<string, string> _messages;
+    private readonly Dictionary<string, string> _messages = Languages.English;
     private readonly Dictionary<string, AbstractUser> _users = new();
 
-    private string? _fileName;
+    private const string? FileName = "certificate.json";
 
     private readonly TObject _emptySample = new();
-    private AbstractUser user = MainRoles.AnonymousUser;
+    private AbstractUser _user = MainRoles.AnonymousUser;
 
     private delegate void Option();
 
-    public Menu(string msgFileName)
+    public Menu()
     {
         _innerCollection = new Collection<string, TObject>();
-        _fileName = null;
-
-        using StreamReader r = new(msgFileName);
-        string json = r.ReadToEnd();
-        try
-        {
-            _messages = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ??
-                        new Dictionary<string, string>();
-        }
-        catch (JsonException)
-        {
-            _messages = new Dictionary<string, string>();
-            Console.WriteLine("DebugInfo: There is some issue with file for messages. \n" +
-                              "Menu might look corrupted");
-        }
     }
 
     private void _PrintMessage(string key, params object?[]? s)
@@ -117,11 +104,9 @@ public partial class Menu<TObject>
     
     private bool RunOption(string option)
     {
-        Dictionary<string, Option> options;
-
-        if (this.user is Staff)
+        var options = this._user switch
         {
-            options = new()
+            Staff => new Dictionary<string, Option>
             {
                 {"0", PrintMenu},
                 {"1", PrintPublicAll},
@@ -133,11 +118,8 @@ public partial class Menu<TObject>
                 {"7", Delete},
                 {"8", Sort},
                 {"9", Logout}
-            };
-        } 
-        else if (this.user is Admin)
-        {
-            options = new()
+            },
+            Admin => new Dictionary<string, Option>
             {
                 {"0", PrintMenu},
                 // {"1", PrintAllUsers},
@@ -152,18 +134,14 @@ public partial class Menu<TObject>
                 {"10", Delete},
                 {"11", Sort},
                 {"12", Logout}
-                
-            };
-        }
-        else
-        {
-            options = new()
+            },
+            _ => new Dictionary<string, Option>
             {
-                {"0", PrintMenu},
-                {"1", SignUp},
-                {"2", SignIn}
-            };
-        }
+                {"0", PrintMenu}, 
+                {"1", SignIn}, 
+                {"2", SignUp}
+            }
+        };
 
         switch (option)
         {

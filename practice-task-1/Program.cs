@@ -7,7 +7,7 @@ internal static class Program
     public static void Main()
     {
         const string path = "lang_en.json";
-        Menu<Certificate> menu = new(path);
+        Menu<Certificate> menu = new();
         menu.Run();
     }
 }

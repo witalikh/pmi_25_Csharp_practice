@@ -4,7 +4,7 @@ public partial class Menu<TObject>
 {
     private void Add()
     {
-        if (!this.user.HasEditPerms)
+        if (!this._user.HasEditPerms)
         {
             _PrintMessage("PermissionDenied");
             return;
@@ -21,7 +21,7 @@ public partial class Menu<TObject>
         }
         Console.WriteLine("---");
 
-        ErrorsDict errors = _innerCollection.Add(values, this.user);
+        ErrorsDict errors = _innerCollection.Add(values, this._user);
         
         if (errors.Count != 0)
             _PrintErrors(ref errors);
@@ -32,7 +32,7 @@ public partial class Menu<TObject>
     // edit 
     private void Edit()
     {
-        if (!this.user.HasEditPerms)
+        if (!this._user.HasEditPerms)
         {
             _PrintMessage("PermissionDenied");
             return;
@@ -45,7 +45,7 @@ public partial class Menu<TObject>
         {
             _PrintMessage("IdAbsent");
         }
-        else if (!this.user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this.user)
+        else if (!this._user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this._user)
         {
             _PrintMessage("InstancePermissionDenied");
         }
@@ -63,7 +63,7 @@ public partial class Menu<TObject>
             Console.Write(_messages.ContainsKey(field) ? _messages[field] : field + ": ");
             oldData[field] = Console.ReadLine() ?? string.Empty;
             
-            ErrorsDict errors = _innerCollection.Edit(key, oldData, this.user);
+            ErrorsDict errors = _innerCollection.Edit(key, oldData, this._user);
             
             if (errors.Count != 0)
                 _PrintErrors(ref errors);
@@ -75,7 +75,7 @@ public partial class Menu<TObject>
     // delete object
     private void Delete()
     {
-        if (!this.user.HasEditPerms)
+        if (!this._user.HasEditPerms)
         {
             _PrintMessage("PermissionDenied");
             return;
@@ -88,7 +88,7 @@ public partial class Menu<TObject>
         {
             _PrintMessage("IdAbsent");
         }
-        else if (!this.user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this.user)
+        else if (!this._user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this._user)
         {
             _PrintMessage("InstancePermissionDenied");
         }

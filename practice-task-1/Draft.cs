@@ -1,4 +1,6 @@
-﻿namespace practice_task_1;
+﻿using System.Text.Json.Serialization;
+
+namespace practice_task_1;
 
 public enum DraftStatus: uint
 {
@@ -10,14 +12,15 @@ public enum DraftStatus: uint
 public class MetaDataWrapper<TKeyType, TObject>
 where TObject: class, IGenericValueType<TKeyType>, new()
 {
-    public TKeyType Id => Value.Id;
+    [JsonIgnore] public TKeyType Id => Value.Id!;
     public TObject Value { get; }
     public ErrorsDict Errors { get; }
     
     public DraftStatus Status { get; private set; } = DraftStatus.Draft;
-    public AbstractUser Author { get; }
+    [JsonIgnore] public AbstractUser Author { get; }
+    public string? AuthorEmail => Author.Email;
 
-    public string Comment = string.Empty;
+    public string Comment { get; set; } = string.Empty;
 
     public MetaDataWrapper(IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {

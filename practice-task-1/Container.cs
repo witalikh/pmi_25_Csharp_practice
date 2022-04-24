@@ -1,4 +1,7 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+
 namespace practice_task_1;
 
 public class Collection<TKeyType, TValueType>
@@ -113,77 +116,56 @@ public class Collection<TKeyType, TValueType>
         }
         return filtered;
     }
-    
-    
 
     public void Sort(string field)
     {
         Keys.Sort(new VersionedObjectComparer<TKeyType, TValueType>(this._Container, field));
     }
 
+    private void AppendFromJson(JsonNode? node, AbstractUser user)
+    {
+        JsonObject jsonObject = node!.AsObject();
+        var dictionary = new Dictionary<string, string>();
+
+        foreach ((string key, JsonNode value) in jsonObject)
+        {
+            dictionary.Add(key, value!.ToString());
+        }
+
+        this.Add(dictionary, user);
+    }
+
     public void DumpIntoJson(string filename)
     {
-        foreach (TKeyType key in this._Container.Keys)
-        {
-            using StreamWriter fileStream = new($"{filename}/{key?.ToString()}");
-            
-            var fancyItems = this._Container[key].Value.FancyItems();
-            fancyItems["Author"] = this._Container[key].Author.ToString()!;
-            fancyItems["Status"] = this._Container[key].Status.ToString();
+        using StreamWriter fileStream = new(filename);
 
-            string json = JsonSerializer.Serialize(fancyItems);
-            fileStream.Write(json);
+        JsonArray array = new JsonArray();
+        foreach (TKeyType key in this.Keys)
+        {
+            JsonElement serializedJsonObject = JsonSerializer.SerializeToElement(this._Container[key]);
+            array.Add(serializedJsonObject);
         }
+        
+        string json = JsonSerializer.Serialize(array);
+        fileStream.Write(json);
     }
     
-    public Dictionary<string, ErrorsDict> LoadFromJson(string filename)
+    public void LoadFromJson(string filename, Dictionary<string, AbstractUser> users)
     {
-        return new();
-        /*foreach (TKeyType key in this._Container.Keys)
-        {
-            using StreamWriter fileStream = new($"{filename}/{key?.ToString()}");
-            
-            var fancyItems = this._Container[key].Value.FancyItems();
-            fancyItems["Author"] = this._Container[key].Author.ToString()!;
-            fancyItems["Status"] = this._Container[key].Status.ToString();
-
-            string json = JsonSerializer.Serialize(fancyItems);
-            fileStream.Write(json);
-        }
-        
-        var errorCollection = new Dictionary<string, ErrorsDict>();
-        
         using StreamReader fileStream = new(filename);
         string json = fileStream.ReadToEnd();
         
-        var arr = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(json);
+        JsonArray arr = JsonSerializer.Deserialize<JsonArray>(json)!;
 
-        if (arr == null)
-            return errorCollection;
-        
-        foreach (var dict in arr)
+        foreach (JsonNode? node in arr)
         {
-            string author = dict["Author"];
-            string status = dict["Status"];
+            JsonNode? value = node!["Value"];
+            string author = node["AuthorEmail"]!.ToString();
 
-            dict.Remove("Author");
-            dict.Remove("Status");
-            
-            AbstractUser user = new Admin();
-            ErrorsDict errors = this.Add(dict, user);
-            
-            if (errors.Count != 0)
-            {
-                string id = dict.ContainsKey("Id") ? dict["Id"] : string.Empty;
-                if (!errorCollection.ContainsKey(id))
-                    errorCollection[id] = errors;
-                else
-                {
-                    // TODO: 
-                }
-            }
+            AbstractUser user = users[author];
+            this.AppendFromJson(value, user);
         }
         
-        return errorCollection;*/
+        Console.WriteLine(arr);
     }
 }

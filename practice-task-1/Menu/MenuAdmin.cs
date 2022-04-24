@@ -4,7 +4,7 @@ public partial class Menu<TObject>
 {
     private void Approve()
     {
-        if (!this.user.HasApprovePerms)
+        if (!this._user.HasApprovePerms)
         {
             _PrintMessage("PermissionDenied");
             return;
@@ -30,7 +30,7 @@ public partial class Menu<TObject>
 
     private void Reject()
     {
-        if (!this.user.HasApprovePerms)
+        if (!this._user.HasApprovePerms)
         {
             _PrintMessage("PermissionDenied");
             return;

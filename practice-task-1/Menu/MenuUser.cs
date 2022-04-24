@@ -24,10 +24,6 @@ public partial class Menu<TObject>
                 foreach (JsonNode? dict in staffDictionaries)
                 {
                     (Staff admin, ErrorsDict errors) = Staff.Create(dict!.AsObject(), false);
-                    
-                    Console.WriteLine(admin.Email);
-                    Console.WriteLine(admin);
-                    
                     this._users.Add(admin.Email!, admin);
                 }
         }
@@ -85,7 +81,7 @@ public partial class Menu<TObject>
 
         if (authenticated)
         {
-            this.user = this._users[email];
+            this._user = this._users[email];
             this._PrintMessage("AuthenticationSuccess");
         }
         else
@@ -99,24 +95,24 @@ public partial class Menu<TObject>
     {
         JsonObject dict = new()
         {
-            ["FirstName"] = this._input_field("FirstName"), // TODO
-            ["LastName"] = this._input_field("LastName"), // TODO
-            ["Email"] = this._input_field("Email"), // TODO
+            ["FirstName"] = this._input_field("FirstName"),
+            ["LastName"] = this._input_field("LastName"),
+            ["Email"] = this._input_field("Email"),
             ["Role"] = "Staff",
             ["Salary"] = "1000"
         };
 
-        string passwordInit = this._input_field("PasswordInit"); // TODO
-        string passwordConfirm = this._input_field("PasswordConfirm"); // TODO
+        string passwordInit = this._input_field("PasswordInit");
+        string passwordConfirm = this._input_field("PasswordConfirm");
         
         dict["Password"] = passwordInit;
         
         
-        var (newUser, errors) = Staff.Create(dict, true);
+        (Staff newUser, ErrorsDict errors) = Staff.Create(dict, true);
 
         if (passwordConfirm != passwordInit)
         {
-            errors.Add("Password", "PasswordMisMatch");
+            errors.Add("Password", "PasswordMismatch");
         }
 
         if (errors.Count != 0)
@@ -127,12 +123,14 @@ public partial class Menu<TObject>
         {
             Console.WriteLine(newUser);
             this._users.Add(newUser.Email!, newUser);
-            this.user = newUser;
+            this._user = newUser;
+            
+            _PrintMessage("SignUpSuccess");
         }
     }
 
     private void Logout()
     {
-        this.user = MainRoles.AnonymousUser;
+        this._user = MainRoles.AnonymousUser;
     }
 }

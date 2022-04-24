@@ -59,7 +59,7 @@ static class Languages
             " 0. Print available options,\n" +
             " -. -------\n" +
             " 1. Login,\n" +
-            " 2. Sign-in,\n" +
+            " 2. Sign-up,\n" +
             " -. -------\n" +
             "Type \"exit\", \"-1\" or \"quit\" (any case) to exit."
         },
@@ -73,6 +73,22 @@ static class Languages
                                " 5. Date of birth,\n" +
                                " 6. Vaccine."
         },
+        
+        {"Email", "Email: "},
+        {"FirstName", "First name: "},
+        {"LastName", "Last name: "},
+        {"FirstDayInCompany", "First day in company: "},
+        {"Salary", "Salary: "},
+        
+        {"PasswordInit", "Password: "},
+        {"PasswordConfirm", "Password (again): "},
+        {"PasswordLogin", "Password: "},
+        
+        {"AuthenticationFailed", "Login failed: user with given credentials doesn't exist!"},
+        {"AuthenticationSuccess", "You have entered into system!"},
+
+        {"SignUpSuccess", "New user has been added!"},
+
 
         {"ChooseFieldOption", "> "},
         {"ChooseOption", ">>> "},
@@ -80,17 +96,17 @@ static class Languages
         {"WrongField", "This field does not exist. You must have mistyped."},
         {"WrongQuery", "Command not found"},
 
-        {"OpenedFile", "Opened file is {0}"},
-        {"NotOpenedFile", "No file is chosen."},
-        {"FileOpenRequest", "Enter the file path here"},
-        {"FileNotSpecified", "The action cannot be performed unless the file is specified!"},
-        {"FileNotExistWarning", "Specified file did not exist, so we created it for you!"},
-        {"AlreadyClosed", "File was already closed!"},
-        {"LoadErrorsFound", "There were some errors in fields in the file, backup file is written!"},
-        {"FileCorruptedError", "File data can't be read, there are some errors!"},
+        // {"OpenedFile", "Opened file is {0}"},
+        // {"NotOpenedFile", "No file is chosen."},
+        // {"FileOpenRequest", "Enter the file path here"},
+        // {"FileNotSpecified", "The action cannot be performed unless the file is specified!"},
+        // {"FileNotExistWarning", "Specified file did not exist, so we created it for you!"},
+        // {"AlreadyClosed", "File was already closed!"},
+        // {"LoadErrorsFound", "There were some errors in fields in the file, backup file is written!"},
+        // {"FileCorruptedError", "File data can't be read, there are some errors!"},
 
-        {"SuccessLoad", "Container data was successfully loaded locally!"},
-        {"SuccessDump", "Local container data was successfully dumped into file!"},
+        // {"SuccessLoad", "Container data was successfully loaded locally!"},
+        // {"SuccessDump", "Local container data was successfully dumped into file!"},
 
         {"SuccessAdd", "New certificate was successfully added!"},
         {"SuccessEdit", "Certificate was successfully patched!"},
@@ -110,6 +126,9 @@ static class Languages
 
         {"PrintAllPrefix", "The list of all certificates: "},
         {"PrintFilteredPrefix", "The list of certificates with specified value {0}"},
+        
+        {"PrintAllDraftPrefix", "The list of all certificates in draft: "},
+        {"PrintFilteredDraftPrefix", "The list of draft certificates with specified value {0}"},
 
         {"Size", "Found entries: {0}"},
 
