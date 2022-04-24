@@ -84,7 +84,7 @@ public partial class Menu<TObject>
         _PrintMessage("EnterId");
         string key = Console.ReadLine() ?? string.Empty;
         
-        if (this._innerCollection.Contains(key))
+        if (!this._innerCollection.Contains(key))
         {
             _PrintMessage("IdAbsent");
         }

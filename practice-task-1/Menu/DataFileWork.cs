@@ -8,15 +8,15 @@ public partial class Menu<TObject>
         try
         {
             _innerCollection.LoadFromJson(FileName!, this._users);
-            _PrintMessage("SuccessLoad");
         }
         catch (JsonException)
         {
+            // TODO: some backup
             _PrintMessage("FileCorruptedError");
         }
         catch (FileNotFoundException)
         {
-            _PrintMessage("FileCorruptedError");
+            
         }
     }
 

@@ -88,7 +88,11 @@ static class Languages
         {"AuthenticationSuccess", "You have entered into system!"},
 
         {"SignUpSuccess", "New user has been added!"},
-
+        
+        {"SuccessApprove", "Certificate was successfully approved from draft!"},
+        {"SuccessReject", "Certificate was rejected!"},
+        {"RejectComment", "Enter the reason of reject: "},
+        {"NotInDraft", "Current certificate is not in draft!"},
 
         {"ChooseFieldOption", "> "},
         {"ChooseOption", ">>> "},

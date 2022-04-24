@@ -124,15 +124,26 @@ public class Collection<TKeyType, TValueType>
 
     private void AppendFromJson(JsonNode? node, AbstractUser user)
     {
-        JsonObject jsonObject = node!.AsObject();
+        JsonObject jsonObject = node!["Value"]!.AsObject();
         var dictionary = new Dictionary<string, string>();
 
-        foreach ((string key, JsonNode value) in jsonObject)
+        foreach ((string key, JsonNode? value) in jsonObject)
         {
             dictionary.Add(key, value!.ToString());
         }
 
         this.Add(dictionary, user);
+
+        switch (node["Status"]!.GetValue<int>()!)
+        {
+            case 0:
+                this._Container[this.Keys[^1]].Approve();
+                break;
+            case 2:
+                string comment = node["Comment"]?.ToString() ?? string.Empty;
+                this._Container[this.Keys[^1]].Reject(comment);
+                break;
+        }
     }
 
     public void DumpIntoJson(string filename)
@@ -159,13 +170,10 @@ public class Collection<TKeyType, TValueType>
 
         foreach (JsonNode? node in arr)
         {
-            JsonNode? value = node!["Value"];
-            string author = node["AuthorEmail"]!.ToString();
+            string author = node!["AuthorEmail"]!.ToString();
 
             AbstractUser user = users[author];
-            this.AppendFromJson(value, user);
+            this.AppendFromJson(node, user);
         }
-        
-        Console.WriteLine(arr);
     }
 }

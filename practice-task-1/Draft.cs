@@ -39,6 +39,6 @@ where TObject: class, IGenericValueType<TKeyType>, new()
     public void Reject(string comment="")
     {
         this.Status = DraftStatus.Rejected;
-        this.Comment = "";
+        this.Comment = comment;
     }
 }

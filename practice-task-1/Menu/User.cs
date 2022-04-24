@@ -75,7 +75,7 @@ public partial class Menu<TObject>
     private void SignIn()
     {
         string email = this._input_field("Email");
-        string password = this._input_field("PasswordLogin"); // TODO
+        string password = this._input_field("PasswordLogin");
 
         bool authenticated = this._users.ContainsKey(email) && this._users[email].CheckPassword(password);
 
