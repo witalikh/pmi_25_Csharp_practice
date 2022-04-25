@@ -93,6 +93,9 @@ static class Languages
         {"SuccessReject", "Certificate was rejected!"},
         {"RejectComment", "Enter the reason of reject: "},
         {"NotInDraft", "Current certificate is not in draft!"},
+        
+        {"Draft", "Draft status: {0}"},
+        {"Comment", "Comment: {0}"},
 
         {"ChooseFieldOption", "> "},
         {"ChooseOption", ">>> "},

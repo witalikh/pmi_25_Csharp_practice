@@ -76,8 +76,9 @@ public partial class Menu<TObject>
         }
     }
     
-    private void _PrintObject(TObject cert)
+    private void _PrintObject(MetaDataWrapper<string, TObject> obj, bool printWithMeta = false)
     {
+        TObject cert = obj.Value;
         var itemsDict = cert.FancyItems();
         
         Console.WriteLine("---");
@@ -85,6 +86,15 @@ public partial class Menu<TObject>
         {
             Console.WriteLine(_messages.ContainsKey(key) ? $"{_messages[key]}{value}" : $"{key}: {value}");
         }
+
+        if (printWithMeta)
+        {
+            Console.Write(" * ");
+            this._PrintMessage("Draft", obj.Status.ToString());
+            Console.Write(" * ");
+            this._PrintMessage("Comment", obj.Comment);
+        }
+        
         Console.WriteLine("+++");
     }
     

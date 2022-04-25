@@ -6,6 +6,7 @@ public partial class Menu<TObject>
         string prefixKey, 
         Collection<string, TObject> collection, 
         Predicate<MetaDataWrapper<string, TObject>> pred,
+        bool withMeta = false,
         string? value = null )
     {
         if (value == null)
@@ -23,7 +24,7 @@ public partial class Menu<TObject>
             var objWrapper = collection[key];
             if (!pred(objWrapper)) 
                 continue;
-            _PrintObject(objWrapper.Value!);
+            _PrintObject(objWrapper, withMeta);
             ++shown;
         }
         _PrintMessage("Size", shown);
@@ -61,7 +62,7 @@ public partial class Menu<TObject>
 
         var filterResult = _innerCollection.Filter(value);
         bool Approved(MetaDataWrapper<string, TObject> obj) => obj.Status == DraftStatus.Approved;
-        _printPublicCollection("PrintFilteredPrefix", filterResult, Approved, value);
+        _printPublicCollection("PrintFilteredPrefix", filterResult, Approved, false, value);
     }
     
     // print all instances that are approved
@@ -80,7 +81,7 @@ public partial class Menu<TObject>
 
         var filterResult = _innerCollection.Filter(value);
         bool Own(MetaDataWrapper<string, TObject> obj) => obj.Author == this._user;
-        _printPublicCollection("PrintFilteredPrefix", filterResult, Own, value);
+        _printPublicCollection("PrintFilteredPrefix", filterResult, Own, true,value);
     }
     
     // print all instances that are approved
@@ -99,6 +100,6 @@ public partial class Menu<TObject>
 
         var filterResult = _innerCollection.Filter(value);
         bool Draft(MetaDataWrapper<string, TObject> obj) => obj.Status == DraftStatus.Draft;
-        _printPublicCollection("PrintFilteredDraftPrefix", filterResult, Draft, value);
+        _printPublicCollection("PrintFilteredDraftPrefix", filterResult, Draft, false, value);
     }
 }
