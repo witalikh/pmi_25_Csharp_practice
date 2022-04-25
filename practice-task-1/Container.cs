@@ -1,19 +1,16 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 namespace practice_task_1;
 
 public class Collection<TKeyType, TValueType>
     where TValueType: class, IGenericValueType<TKeyType>, new()
 {
-    // dictionary
     private Dictionary<TKeyType, MetaDataWrapper<TKeyType, TValueType>> _Container;
 
     public int Size => Keys.Count;
     public MetaDataWrapper<TKeyType, TValueType> this[TKeyType key] => this._Container[key];
-
-    // auto-properties
+    
     public List<TKeyType> Keys { get; }
 
     public Collection()
@@ -24,7 +21,7 @@ public class Collection<TKeyType, TValueType>
 
     public ErrorsDict Add(IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {
-        var obj = new MetaDataWrapper<TKeyType, TValueType>(dict, user);
+        MetaDataWrapper<TKeyType, TValueType> obj = new MetaDataWrapper<TKeyType, TValueType>(dict, user);
         ErrorsDict errors = obj.Errors;
         
         if (Keys.Contains(obj.Id))
@@ -41,7 +38,7 @@ public class Collection<TKeyType, TValueType>
     
     public ErrorsDict Edit(TKeyType id, IReadOnlyDictionary<string, string> dict, AbstractUser user)
     {
-        var obj = new MetaDataWrapper<TKeyType, TValueType>(dict, user);
+        MetaDataWrapper<TKeyType, TValueType> obj = new MetaDataWrapper<TKeyType, TValueType>(dict, user);
         ErrorsDict errors = obj.Errors;
         
         if (obj.Id != null && !Equals(id, obj.Id))
@@ -64,40 +61,8 @@ public class Collection<TKeyType, TValueType>
         this.Keys.Remove(id);
         return true;
     }
-
-    /*public bool Approve(TKeyType id, AbstractUser user)
-    {
-        return this.Contains(id) && this._Container[id].Publish();
-    }
     
-    public bool Reject(TKeyType id, AbstractUser user)
-    {
-        return this.Contains(id) && this._Container[id].Discard();
-    }*/
-
-    public void Clear()
-    {
-        Keys.Clear();
-        _Container.Clear();
-    }
-
     public bool Contains(TKeyType id) => _Container.ContainsKey(id);
-
-    public int? GetIndex(TKeyType id)
-    {
-        if (!Contains(id))
-            return null;
-        
-        for (int i = 0; i < Size; ++i)
-        {
-            if (Equals(_Container[Keys[i]].Id, id))
-            {
-                return i;
-            }
-        }
-
-        return null;
-    }
 
     public Collection<TKeyType, TValueType> Filter(string? expr = null)
     {
@@ -107,12 +72,13 @@ public class Collection<TKeyType, TValueType>
         }
         
         Collection<TKeyType, TValueType> filtered = new();
-        foreach ((TKeyType key, var value) in this._Container)
+        foreach ((TKeyType key, MetaDataWrapper<TKeyType, TValueType> value) in this._Container)
         {
-            if (!value.Value.Contains(expr))
-                continue;
-            
-            filtered._Container.Add(key, value);
+            if (value.Value.Contains(expr))
+            {
+                filtered.Keys.Add(key);
+                filtered._Container.Add(key, value);
+            }
         }
         return filtered;
     }
@@ -125,7 +91,7 @@ public class Collection<TKeyType, TValueType>
     private void AppendFromJson(JsonNode? node, AbstractUser user)
     {
         JsonObject jsonObject = node!["Value"]!.AsObject();
-        var dictionary = new Dictionary<string, string>();
+        Dictionary<string, string> dictionary = new Dictionary<string, string>();
 
         foreach ((string key, JsonNode? value) in jsonObject)
         {

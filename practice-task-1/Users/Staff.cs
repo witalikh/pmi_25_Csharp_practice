@@ -54,7 +54,7 @@ public class Staff: AbstractUser
         string email = dict[nameof(Email)]?.GetValue<string>() ?? string.Empty;
         string password = dict[nameof(Password)]?.GetValue<string>() ?? string.Empty;
 
-        decimal salary = decimal.Parse(dict[nameof(Salary)]?.GetValue<string>() ?? "0");
+        decimal salary = ((decimal) dict[nameof(Salary)]?.GetValue<int>())!;
         DateTime created = dict[nameof(FirstDayInCompany)]?.GetValue<DateTime>() ?? DateTime.Now;
 
         Staff staff = new Staff(

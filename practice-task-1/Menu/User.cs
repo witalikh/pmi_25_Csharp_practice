@@ -5,6 +5,7 @@ namespace practice_task_1;
 
 public partial class Menu<TObject>
 {
+    
     private string _input_field(string key)
     {
         Console.Write(this._messages.ContainsKey(key) ? this._messages[key] : key);
@@ -51,7 +52,7 @@ public partial class Menu<TObject>
         // using StreamWriter adminFile = new("admin.json");
 
         // var admins = new List<Admin>();
-        var staff = new List<Staff>();
+        List<Staff> staff = new List<Staff>();
 
         foreach ((_, AbstractUser dictUser) in this._users)
         {
@@ -99,7 +100,7 @@ public partial class Menu<TObject>
             ["LastName"] = this._input_field("LastName"),
             ["Email"] = this._input_field("Email"),
             ["Role"] = "Staff",
-            ["Salary"] = "1000"
+            ["Salary"] = 1000
         };
 
         string passwordInit = this._input_field("PasswordInit");
@@ -113,6 +114,15 @@ public partial class Menu<TObject>
         if (passwordConfirm != passwordInit)
         {
             errors.Add("Password", "PasswordMismatch");
+        }
+
+        if (
+            ValidationUtils.validate_regex(
+                passwordInit,
+                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$"
+            ) == null)
+        {
+            errors.Add("Password", "PasswordFormat");
         }
 
         if (errors.Count != 0)

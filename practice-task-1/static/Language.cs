@@ -1,8 +1,8 @@
 ﻿namespace practice_task_1.static_files;
 
-static class Languages
+internal static class Languages
 {
-    public static Dictionary<string, string> English = new()
+    public static readonly Dictionary<string, string> English = new()
     {
         {
             "StaffMenu", 
@@ -73,6 +73,12 @@ static class Languages
                                " 5. Date of birth,\n" +
                                " 6. Vaccine."
         },
+        {
+            "ChooseType", " - 0. Approved,\n" +
+                          " - 1. Draft,\n" +
+                          " - 2. Rejected,\n" +
+                          " - Anything else - all."
+        },
         
         {"Email", "Email: "},
         {"FirstName", "First name: "},
@@ -80,6 +86,12 @@ static class Languages
         {"FirstDayInCompany", "First day in company: "},
         {"Salary", "Salary: "},
         
+        {"EmailFormat", "Invalid email address"},
+        {"FirstNameFormat", "First name should contain at least 2 letters and only letters"},
+        {"LastNameFormat", "Last name should contain at least 2 letters and only letters"},
+        {"PasswordFormat", "Password should contain at least one capital, one small and one digit"},
+        {"PasswordMismatch", "Passwords do not match"},
+
         {"PasswordInit", "Password: "},
         {"PasswordConfirm", "Password (again): "},
         {"PasswordLogin", "Password: "},

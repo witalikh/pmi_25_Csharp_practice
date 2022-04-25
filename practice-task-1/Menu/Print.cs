@@ -1,7 +1,40 @@
-﻿namespace practice_task_1;
+﻿using System.Globalization;
+
+namespace practice_task_1;
 
 public partial class Menu<TObject>
 {
+    private void _PrintField(string key, string? value)
+    {
+        Console.Write(this._messages.ContainsKey(key) ? this._messages["FirstName"] : "FirstName");
+        Console.WriteLine(value);
+    }
+    
+    private void _PrintUser(AbstractUser user)
+    {
+        Console.WriteLine("---");
+        
+        _PrintField("FirstName", user.FirstName);
+        _PrintField("LastName", user.LastName);
+        _PrintField("Email", user.Email);
+
+        if (user is Staff staff)
+        {
+            _PrintField("Salary", staff.Salary.ToString());
+            _PrintField("FirstDayInCompany", staff.FirstDayInCompany.ToString(CultureInfo.InvariantCulture));
+        }
+        Console.WriteLine("+++");
+    }
+    
+    private void PrintAllUsers()
+    {
+        _PrintMessage("PrintUsers", this._users.Count);
+        foreach( (_, AbstractUser user) in this._users)
+        {
+            _PrintUser(user);
+        }
+    }
+    
     private void _printPublicCollection(
         string prefixKey, 
         Collection<string, TObject> collection, 
@@ -21,7 +54,7 @@ public partial class Menu<TObject>
         uint shown = 0; 
         foreach(string key in collection.Keys)
         {
-            var objWrapper = collection[key];
+            MetaDataWrapper<string, TObject> objWrapper = collection[key];
             if (!pred(objWrapper)) 
                 continue;
             _PrintObject(objWrapper, withMeta);
@@ -29,8 +62,7 @@ public partial class Menu<TObject>
         }
         _PrintMessage("Size", shown);
     }
-
-    // print menu
+    
     private void PrintMenu()
     {
         switch (this._user)
@@ -47,59 +79,75 @@ public partial class Menu<TObject>
         }
     }
     
-    // print all instances that are approved
     private void PrintPublicAll()
     {
         bool Approved(MetaDataWrapper<string, TObject> obj) => obj.Status == DraftStatus.Approved;
         _printPublicCollection("PrintAllPrefix", _innerCollection, Approved);
     }
-
-    // print all approved instances with filter
+    
     private void PrintPublicFiltered()
     {
         _PrintMessage("EnterFilterValue");
         string value = Console.ReadLine() ?? string.Empty;
 
-        var filterResult = _innerCollection.Filter(value);
+        Collection<string, TObject> filterResult = _innerCollection.Filter(value);
         bool Approved(MetaDataWrapper<string, TObject> obj) => obj.Status == DraftStatus.Approved;
         _printPublicCollection("PrintFilteredPrefix", filterResult, Approved, false, value);
     }
     
-    // print all instances that are approved
     private void PrintPrivateAll()
     {
-        bool Own(MetaDataWrapper<string, TObject> obj) => obj.Author == this._user;
-        _printPublicCollection("PrintAllPrefix", _innerCollection, Own);
-    }
+        _PrintMessage("ChooseType");
+        string option = Console.ReadLine()!.Trim().ToLower();
 
-    // print all approved instances with filter
+        bool Condition(MetaDataWrapper<string, TObject> obj)
+        {
+            return option switch
+            {
+                "0" => obj.Status == DraftStatus.Approved && obj.Author == this._user,
+                "1" => obj.Status == DraftStatus.Draft && obj.Author == this._user,
+                "2" => obj.Status == DraftStatus.Rejected && obj.Author == this._user,
+                _ => obj.Author == this._user
+            };
+        }
+        _printPublicCollection("PrintAllPrefix", _innerCollection, Condition, true);
+    }
+    
     private void PrintPrivateFiltered()
     {
-        // TODO: additional filters
+        _PrintMessage("ChooseType");
+        string option = Console.ReadLine()!.Trim().ToLower();
+
+        bool Condition(MetaDataWrapper<string, TObject> obj)
+        {
+            return option switch
+            {
+                "0" => obj.Status == DraftStatus.Approved && obj.Author == this._user,
+                "1" => obj.Status == DraftStatus.Draft && obj.Author == this._user,
+                "2" => obj.Status == DraftStatus.Rejected && obj.Author == this._user,
+                _ => obj.Status == DraftStatus.Approved && obj.Author == this._user
+            };
+        }
         _PrintMessage("EnterFilterValue");
         string value = Console.ReadLine() ?? string.Empty;
 
-        var filterResult = _innerCollection.Filter(value);
-        bool Own(MetaDataWrapper<string, TObject> obj) => obj.Author == this._user;
-        _printPublicCollection("PrintFilteredPrefix", filterResult, Own, true,value);
+        Collection<string, TObject> filterResult = _innerCollection.Filter(value);
+        _printPublicCollection("PrintFilteredPrefix", filterResult, Condition, true,value);
     }
     
-    // print all instances that are approved
     private void PrintDraftAll()
     {
         bool Draft(MetaDataWrapper<string, TObject> obj) => obj.Status == DraftStatus.Draft;
-        _printPublicCollection("PrintAllDraftPrefix", _innerCollection, Draft);
+        _printPublicCollection("PrintAllDraftPrefix", _innerCollection, Draft, true);
     }
-
-    // print all approved instances with filter
+    
     private void PrintDraftFiltered()
     {
-        // TODO: additional filters
         _PrintMessage("EnterFilterValue");
         string value = Console.ReadLine() ?? string.Empty;
 
-        var filterResult = _innerCollection.Filter(value);
+        Collection<string, TObject> filterResult = _innerCollection.Filter(value);
         bool Draft(MetaDataWrapper<string, TObject> obj) => obj.Status == DraftStatus.Draft;
-        _printPublicCollection("PrintFilteredDraftPrefix", filterResult, Draft, false, value);
+        _printPublicCollection("PrintFilteredDraftPrefix", filterResult, Draft, true, value);
     }
 }

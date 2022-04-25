@@ -11,7 +11,7 @@ public partial class Menu<TObject>
         }
         
         string[] keys = _emptySample.Keys();
-        var values = new Dictionary<string, string>();
+        Dictionary<string, string> values = new Dictionary<string, string>();
 
         Console.WriteLine("+++");
         foreach (string property in keys)
@@ -51,7 +51,7 @@ public partial class Menu<TObject>
         }
         else
         {
-            var oldData = this._innerCollection[key].Value!.FancyItems();
+            Dictionary<string, string> oldData = this._innerCollection[key].Value!.FancyItems();
             
             string? field = _ChooseField();
             if (field == null)

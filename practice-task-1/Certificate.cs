@@ -128,7 +128,7 @@ public class Certificate: IGenericValueType<string>
     
     public ErrorsDict GetValidationErrors()
     {
-        var errorsDict = new ErrorsDict();
+        ErrorsDict errorsDict = new ErrorsDict();
         foreach ((string property, object? value) in _itemsDict)
         {
             if (value == null)
@@ -145,15 +145,14 @@ public class Certificate: IGenericValueType<string>
 
     public bool Contains(string expr)
     {
-        var values = _itemsDict.Values;
+        Dictionary<string, object?>.ValueCollection values = _itemsDict.Values;
         foreach (object? value in values)
         {
-            if (value != null)
-            {
-                string strValue = value.ToString() ?? string.Empty;
-                if (strValue.ToLower().Contains(expr.ToLower()))
-                    return true;
-            }
+            if (value == null) 
+                continue;
+            string strValue = value.ToString() ?? string.Empty;
+            if (strValue.ToLower().Contains(expr.ToLower()))
+                return true;
         }
         return false;
     }

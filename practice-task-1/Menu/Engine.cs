@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using practice_task_1.static_files;
+﻿using practice_task_1.static_files;
 
 namespace practice_task_1;
 
@@ -37,7 +36,7 @@ public partial class Menu<TObject>
     private void _PrintErrors(ref ErrorsDict errors)
     {
         Console.WriteLine("!!!");
-        foreach ((string field, var listOfErrors) in errors)
+        foreach ((string field, LinkedList<string> listOfErrors) in errors)
         {
             _PrintMessage($"{field}");
             foreach (string error in listOfErrors)
@@ -79,7 +78,7 @@ public partial class Menu<TObject>
     private void _PrintObject(MetaDataWrapper<string, TObject> obj, bool printWithMeta = false)
     {
         TObject cert = obj.Value;
-        var itemsDict = cert.FancyItems();
+        Dictionary<string, string> itemsDict = cert.FancyItems();
         
         Console.WriteLine("---");
         foreach ((string key, string? value) in itemsDict)
@@ -114,7 +113,7 @@ public partial class Menu<TObject>
     
     private bool RunOption(string option)
     {
-        var options = this._user switch
+        Dictionary<string, Option> options = this._user switch
         {
             Staff => new Dictionary<string, Option>
             {
@@ -132,7 +131,7 @@ public partial class Menu<TObject>
             Admin => new Dictionary<string, Option>
             {
                 {"0", PrintMenu},
-                // {"1", PrintAllUsers},
+                {"1", PrintAllUsers},
                 {"2", PrintPublicAll},
                 {"3", PrintDraftAll},
                 {"4", PrintPublicFiltered},
