@@ -4,7 +4,7 @@ namespace practice_task_1;
 
 public class Staff: AbstractUser
 {
-    public decimal? Salary { get; private init; }
+    public decimal? Salary { get; set; }
     public DateTime FirstDayInCompany { get; private init; }
 
     public Staff(

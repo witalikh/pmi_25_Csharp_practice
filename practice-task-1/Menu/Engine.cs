@@ -132,6 +132,8 @@ public partial class Menu<TObject>
             {
                 {"0", PrintMenu},
                 {"1", PrintAllUsers},
+                {"1a", EditSalary},
+                {"1b", Fire},
                 {"2", PrintPublicAll},
                 {"3", PrintDraftAll},
                 {"4", PrintPublicFiltered},

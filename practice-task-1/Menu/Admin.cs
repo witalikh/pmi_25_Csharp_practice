@@ -56,4 +56,54 @@ public partial class Menu<TObject>
             _PrintMessage("SuccessReject");
         }
     }
+
+    private void EditSalary()
+    {
+        _PrintMessage("StaffEmail");
+        string email = Console.ReadLine() ?? string.Empty;
+
+        if (!_users.ContainsKey(email))
+        {
+            _PrintMessage("AbsentUser");
+        }
+        else if (_users[email] is not Staff)
+        {
+            _PrintMessage("NotStaffUser");
+        }
+        else
+        {
+            string salary = _input_field("Salary");
+            bool valid = Decimal.TryParse(salary, out decimal salaryDecimal);
+            if (!valid || salaryDecimal < 0)
+            {
+                _PrintMessage("InvalidSalary");
+            }
+            else
+            {
+                if (_users[email] is Staff staff)
+                    staff.Salary = salaryDecimal;
+                _PrintMessage("SuccessSalaryEdit");
+            }
+        }
+    }
+    
+    private void Fire()
+    {
+        _PrintMessage("StaffEmail");
+        string email = Console.ReadLine() ?? string.Empty;
+
+        if (!_users.ContainsKey(email))
+        {
+            _PrintMessage("AbsentUser");
+        }
+        else if (_users[email] is not Staff)
+        {
+            _PrintMessage("NotStaffUser");
+        }
+        else
+        {
+            _users.Remove(email);
+            _PrintMessage("SuccessFire");
+        }
+    }
 }

@@ -6,7 +6,7 @@ public partial class Menu<TObject>
 {
     private void _PrintField(string key, string? value)
     {
-        Console.Write(this._messages.ContainsKey(key) ? this._messages["FirstName"] : "FirstName");
+        Console.Write(this._messages.ContainsKey(key) ? this._messages[key] : key);
         Console.WriteLine(value);
     }
     

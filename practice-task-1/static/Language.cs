@@ -32,6 +32,8 @@ internal static class Languages
             " 0. Print available options,\n" +
             " -. ---------------\n" +
             " 1. Print all users,\n" +
+            " 1a. Change salary for a staff member,\n" +
+            " 1b. Fire staff member,\n" +
             " -. ---------------\n" +
             " 2. Print all approved certificates,\n" +
             " 3. Print all draft certificates,\n" +
@@ -115,17 +117,13 @@ internal static class Languages
         {"WrongField", "This field does not exist. You must have mistyped."},
         {"WrongQuery", "Command not found"},
 
-        // {"OpenedFile", "Opened file is {0}"},
-        // {"NotOpenedFile", "No file is chosen."},
-        // {"FileOpenRequest", "Enter the file path here"},
-        // {"FileNotSpecified", "The action cannot be performed unless the file is specified!"},
-        // {"FileNotExistWarning", "Specified file did not exist, so we created it for you!"},
-        // {"AlreadyClosed", "File was already closed!"},
-        // {"LoadErrorsFound", "There were some errors in fields in the file, backup file is written!"},
-        // {"FileCorruptedError", "File data can't be read, there are some errors!"},
-
-        // {"SuccessLoad", "Container data was successfully loaded locally!"},
-        // {"SuccessDump", "Local container data was successfully dumped into file!"},
+        {"StaffEmail", "Enter staff email here: "},
+        {"AbsentUser", "User doesn't exist!"},
+        {"NotStaffUser", "User is not staff!"},
+        
+        {"InvalidSalary", "Salary value is invalid! "},
+        {"SuccessSalaryEdit", "Salary was changed!"},
+        {"SuccessFire", "Staff member was successfully fired!"},
 
         {"SuccessAdd", "New certificate was successfully added!"},
         {"SuccessEdit", "Certificate was successfully patched!"},
