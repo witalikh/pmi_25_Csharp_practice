@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CertificateAPI;
 
@@ -19,9 +19,65 @@ public static class Settings
     public const int MaxCertDelay = 14;
 }
 
+public class VaccineValidator : ValidationAttribute
+{      
+    protected override ValidationResult 
+        IsValid(object? value, ValidationContext validationContext)
+    {   
+        string vaccine = Convert.ToString(value);
+        if (Settings.Vaccines.Contains(vaccine))
+        {
+            return ValidationResult.Success;
+        }
+        else
+        {
+            return new ValidationResult
+                ("Invalid vaccine.");
+        }
+    }        
+}
+
+public class StartDateValidator : ValidationAttribute
+{      
+    protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
+    {
+        Certificate cert = validationContext.ObjectInstance as Certificate;
+        DateTime startDate = Convert.ToDateTime(value);
+        if (cert.EndDate != null && startDate <= cert.EndDate)
+        {
+            return ValidationResult.Success;
+        }
+        else
+        {
+            return new ValidationResult
+                ("Start date cannot be later than end date");
+        }
+    }        
+}
+
+public class BirthDateValidator : ValidationAttribute
+{      
+    protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
+    {
+        Certificate cert = validationContext.ObjectInstance as Certificate;
+        DateTime birthDate = Convert.ToDateTime(value);
+        if (cert.StartDate != null && birthDate <= cert.StartDate)
+        {
+            return ValidationResult.Success;
+        }
+        else
+        {
+            return new ValidationResult
+                ("Birth date cannot be later than start date");
+        }
+    }        
+}
+
 public class Certificate
 {
-    public int Id { get; set; }
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; } = default(int);
     
     [Required]
     [RegularExpression(
@@ -39,28 +95,21 @@ public class Certificate
     public string? Passport { get; set; }
     
     [Required]
-    [Compare("EndDate", ErrorMessage = "Start date cannot be later than end date")]
+    [StartDateValidator]
     public DateTime StartDate { get; set; }
     
     [Required]
     public DateTime EndDate { get; set; }
     
     [Required]
-    [Compare("StartDate", ErrorMessage = "Birth date cannot be later than start date")]
+    [BirthDateValidator]
     public DateTime BirthDate { get; set; }
 
-    public string? Vaccine { get; set; }
-
-    public override string ToString()
+    [Required]
+    [VaccineValidator]
+    public string Vaccine
     {
-        return string.Concat(
-            Passport,
-            UserName,
-            Vaccine,
-            BirthDate.ToString(CultureInfo.CurrentCulture),
-            StartDate.ToString(CultureInfo.CurrentCulture),
-            EndDate.ToString(CultureInfo.CurrentCulture),
-            Id.ToString()
-        );
+        get;
+        set;
     }
 }
