@@ -1,0 +1,101 @@
+﻿namespace practice_task_1;
+
+public partial class Menu<TObject>
+{
+    private void Add()
+    {
+        if (!this._user.HasEditPerms)
+        {
+            _PrintMessage("PermissionDenied");
+            return;
+        }
+        
+        string[] keys = _emptySample.Keys();
+        Dictionary<string, string> values = new Dictionary<string, string>();
+
+        Console.WriteLine("+++");
+        foreach (string property in keys)
+        {
+            Console.Write(_messages.ContainsKey(property) ? _messages[property] : property + ": ");
+            values[property] = (Console.ReadLine() ?? string.Empty).Trim();
+        }
+        Console.WriteLine("---");
+
+        ErrorsDict errors = _innerCollection.Add(values, this._user);
+        
+        if (errors.Count != 0)
+            _PrintErrors(ref errors);
+        else
+            _PrintMessage("SuccessAdd");
+    }
+
+    // edit 
+    private void Edit()
+    {
+        if (!this._user.HasEditPerms)
+        {
+            _PrintMessage("PermissionDenied");
+            return;
+        }
+        
+        _PrintMessage("EnterId");
+        string key = Console.ReadLine() ?? string.Empty;
+
+        if (!_innerCollection.Contains(key))
+        {
+            _PrintMessage("IdAbsent");
+        }
+        else if (!this._user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this._user)
+        {
+            _PrintMessage("InstancePermissionDenied");
+        }
+        else
+        {
+            Dictionary<string, string> oldData = this._innerCollection[key].Value!.FancyItems();
+            
+            string? field = _ChooseField();
+            if (field == null)
+            {
+                _PrintMessage("WrongField");
+                return;
+            }
+            
+            Console.Write(_messages.ContainsKey(field) ? _messages[field] : field + ": ");
+            oldData[field] = Console.ReadLine() ?? string.Empty;
+            
+            ErrorsDict errors = _innerCollection.Edit(key, oldData, this._user);
+            
+            if (errors.Count != 0)
+                _PrintErrors(ref errors);
+            else
+                _PrintMessage("SuccessEdit");
+        }
+    }
+
+    // delete object
+    private void Delete()
+    {
+        if (!this._user.HasEditPerms)
+        {
+            _PrintMessage("PermissionDenied");
+            return;
+        }
+        
+        _PrintMessage("EnterId");
+        string key = Console.ReadLine() ?? string.Empty;
+        
+        if (!this._innerCollection.Contains(key))
+        {
+            _PrintMessage("IdAbsent");
+        }
+        else if (!this._user.HasEditPermsForOtherInstances && _innerCollection[key].Author != this._user)
+        {
+            _PrintMessage("InstancePermissionDenied");
+        }
+        else
+        {
+            _innerCollection.Delete(key);
+            _PrintMessage("SuccessDelete");
+        }
+    }
+}
